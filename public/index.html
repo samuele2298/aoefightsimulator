@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AoE4 Fight Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
@@ -23,10 +29,6 @@
           <label>Mappa
             <select id="environment">
               <option value="dry-arabia" selected>Dry Arabia</option>
-              <option value="forest-belts">Forest Belts</option>
-              <option value="random-clusters">Random Clusters</option>
-              <option value="mini-hideout">Mini Hideout</option>
-              <option value="around-landmark">Around Landmark</option>
             </select>
           </label>
         </div>
@@ -104,7 +106,7 @@
                 <select id="teamA-unit-select"></select>
               </div>
               <input type="number" min="1" max="200" value="10" id="teamA-unit-count" />
-              <button type="button" data-team="A" class="btn add-unit">+ Add</button>
+              <button type="button" data-team="A" class="btn add-unit add-unit-btn" aria-label="Aggiungi unita" title="Aggiungi unita">+</button>
             </div>
             <label id="teamA-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Modalita Desert Raider
               <select id="teamA-unit-attack-mode">
@@ -172,7 +174,7 @@
                 <select id="teamB-unit-select"></select>
               </div>
               <input type="number" min="1" max="200" value="10" id="teamB-unit-count" />
-              <button type="button" data-team="B" class="btn add-unit">+ Add</button>
+              <button type="button" data-team="B" class="btn add-unit add-unit-btn" aria-label="Aggiungi unita" title="Aggiungi unita">+</button>
             </div>
             <label id="teamB-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Modalita Desert Raider
               <select id="teamB-unit-attack-mode">
@@ -202,6 +204,14 @@
         <p class="advanced-analytics-subtle">Statistiche di supporto per leggere impatto di unita, tech, formazione e ambiente.</p>
         <div id="advanced-analytics" class="advanced-analytics-grid">
           <div class="analytics-empty">Avvia una simulazione per vedere il pannello completo.</div>
+        </div>
+      </section>
+
+      <section class="credits-showcase" aria-label="Credits">
+        <div class="credits-content">
+          <h3>Credits</h3>
+          <p class="credits-name">Samuele Carpani</p>
+          <a class="credits-email" href="mailto:samu.carpa@gmail.com">samu.carpa@gmail.com</a>
         </div>
       </section>
     </div>

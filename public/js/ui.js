@@ -190,7 +190,7 @@ const templates = [
       formation: 'normal',
       strategy: 'straight',
       units: [
-        { count: 16, preferredIds: ['royal-knight', 'knight'], keywords: ['knight'] },
+        { count: 20, preferredIds: ['royal-knight', 'knight'], keywords: ['knight'] },
         { count: 40, preferredIds: ['archer'], keywords: ['archer'] },
       ],
     },
@@ -238,7 +238,7 @@ const templates = [
       formation: 'normal',
       strategy: 'straight',
       units: [
-        { count: 40, preferredIds: ['horseman'], keywords: ['horseman'] },
+        { count: 25, preferredIds: ['horseman'], keywords: ['horseman'] },
         { count: 40, preferredIds: ['arbaletrier', 'crossbowman'], keywords: ['arbal', 'crossbow'] },
       ],
     },
@@ -263,8 +263,8 @@ const templates = [
       formation: 'normal',
       strategy: 'straight',
       units: [
-        { count: 20, preferredIds: ['knight'], keywords: ['knight', 'lancer'] },
-        { count: 40, preferredIds: ['archer'], keywords: ['archer'] },
+        { count: 40, preferredIds: ['lancer', 'knight'], keywords: ['lancer'] },
+        { count: 50, preferredIds: ['archer'], keywords: ['archer'] },
       ],
     },
   },
@@ -732,6 +732,22 @@ function resolveUnitFromSpec(units, spec) {
   );
 }
 
+function getUnitResourceTotal(def) {
+  if (!def || !def.costs) {
+    return 0;
+  }
+
+  if (typeof def.costs.total === 'number') {
+    return def.costs.total;
+  }
+
+  const food = Number(def.costs.food || 0);
+  const wood = Number(def.costs.wood || 0);
+  const gold = Number(def.costs.gold || 0);
+  const stone = Number(def.costs.stone || 0);
+  return food + wood + gold + stone;
+}
+
 function renderUnitList(team) {
   const { unitList } = teamElements(team);
   const items = state.selectedUnits[team];
@@ -757,7 +773,10 @@ function renderUnitList(team) {
 
     const count = document.createElement('div');
     count.className = 'unit-batch-count';
-    count.textContent = `x${item.count}`;
+    const unitDef = defsById.get(item.unitId);
+    const unitResourceTotal = getUnitResourceTotal(unitDef);
+    const batchResourceTotal = item.count * unitResourceTotal;
+    count.textContent = `x${item.count} • ${batchResourceTotal} res`;
     meta.appendChild(title);
     meta.appendChild(count);
 
