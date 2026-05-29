@@ -1,0 +1,35 @@
+{
+  "id": "imperial-red-seals-3",
+  "baseId": "imperial-red-seals",
+  "type": "technology",
+  "name": "Imperial Red Seals",
+  "pbgid": 2127326,
+  "attribName": "upgrade_official_limit",
+  "age": 3,
+  "civs": [
+    "zx"
+  ],
+  "description": "Imperial Official limit increased by +2. Grants an Imperial Official upon completion.",
+  "classes": [
+    "chinese_ha_01_upgrade",
+    "economic_upgrade"
+  ],
+  "displayClasses": [
+    "Economic Upgrade"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 100,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 300,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "mount-lu-academy"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/imperial-red-seals-3.png",
+  "effects": []
+}

@@ -1,0 +1,57 @@
+{
+  "id": "armored-beasts-4",
+  "baseId": "armored-beasts",
+  "type": "technology",
+  "name": "Armored Beasts",
+  "pbgid": 200887,
+  "attribName": "upgrade_age3_war_elephant_elite_sul",
+  "age": 4,
+  "civs": [
+    "de"
+  ],
+  "description": "Grant +20% health and +4 ranged armor to War Elephants.",
+  "classes": [
+    "sultinate_upgrade"
+  ],
+  "displayClasses": [
+    "Elephant Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "gold": 0,
+    "total": 0,
+    "popcap": 0,
+    "time": 720
+  },
+  "producedBy": [
+    "stable"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/armored-beasts-4.png",
+  "effects": [
+    {
+      "property": "rangedArmor",
+      "select": {
+        "id": [
+          "war-elephant"
+        ]
+      },
+      "effect": "change",
+      "value": 4,
+      "type": "passive"
+    },
+    {
+      "property": "hitpoints",
+      "select": {
+        "id": [
+          "war-elephant"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.2,
+      "type": "passive"
+    }
+  ]
+}

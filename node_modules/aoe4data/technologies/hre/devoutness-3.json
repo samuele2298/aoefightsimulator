@@ -1,0 +1,97 @@
+{
+  "id": "devoutness-3",
+  "baseId": "devoutness",
+  "type": "technology",
+  "name": "Devoutness",
+  "pbgid": 199515,
+  "attribName": "upgrade_devoutness_hre",
+  "age": 3,
+  "civs": [
+    "hr"
+  ],
+  "description": "Inspired Villagers gather resources +5% faster and construct buildings and defenses +25% quicker.",
+  "classes": [
+    "economic_upgrade",
+    "hre_upgrade",
+    "scar_castle_age_upgrade",
+    "scar_economic_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Prelate Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 100,
+    "wood": 0,
+    "stone": 0,
+    "gold": 250,
+    "total": 350,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "monastery",
+    "regnitz-cathedral"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/devoutness-3.png",
+  "effects": [
+    {
+      "property": "goldGatherRate",
+      "select": {
+        "id": [
+          "villagers"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.05,
+      "type": "influence"
+    },
+    {
+      "property": "foodGatherRate",
+      "select": {
+        "id": [
+          "villagers"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.05,
+      "type": "influence"
+    },
+    {
+      "property": "woodGatherRate",
+      "select": {
+        "id": [
+          "villagers"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.05,
+      "type": "influence"
+    },
+    {
+      "property": "stoneGatherRate",
+      "select": {
+        "id": [
+          "villagers"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.05,
+      "type": "influence"
+    },
+    {
+      "property": "buildTime",
+      "select": {
+        "class": [
+          [
+            "building"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.8,
+      "type": "influence"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "royal-institute-2",
+  "baseId": "royal-institute",
+  "type": "building",
+  "name": "Royal Institute",
+  "pbgid": 2694641,
+  "attribName": "building_landmark_age3_le_grande_university_fre_ha_01",
+  "age": 2,
+  "civs": [
+    "je"
+  ],
+  "description": "Houses unique technologies. Research is -30% cheaper here and ignores Age requirements.",
+  "classes": [
+    "age2_landmark1",
+    "audio_production_landmark",
+    "building",
+    "landmark",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_feudal_age"
+  ],
+  "displayClasses": [
+    "Age III - Technology Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 1200,
+    "wood": 0,
+    "stone": 0,
+    "gold": 600,
+    "total": 1800,
+    "popcap": 0,
+    "time": 220
+  },
+  "producedBy": [
+    "jeanne-darc-peasant",
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/royal-institute-2.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": []
+}

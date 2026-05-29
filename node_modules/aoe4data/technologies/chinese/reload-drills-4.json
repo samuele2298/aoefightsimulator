@@ -1,0 +1,51 @@
+{
+  "id": "reload-drills-4",
+  "baseId": "reload-drills",
+  "type": "technology",
+  "name": "Reload Drills",
+  "pbgid": 173803,
+  "attribName": "upgrade_reload_drills_chi",
+  "age": 4,
+  "civs": [
+    "ch"
+  ],
+  "description": "Increase the attack speed of Bombards by +33%.",
+  "classes": [
+    "chinese_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Bombard Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 150,
+    "stone": 0,
+    "gold": 350,
+    "total": 500,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "astronomical-clocktower",
+    "siege-workshop"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/reload-drills-4.png",
+  "effects": [
+    {
+      "property": "attackSpeed",
+      "select": {
+        "id": [
+          "bombard"
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.75,
+      "type": "passive"
+    }
+  ]
+}

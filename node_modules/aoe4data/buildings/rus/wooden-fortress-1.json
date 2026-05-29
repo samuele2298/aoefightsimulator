@@ -1,0 +1,73 @@
+{
+  "id": "wooden-fortress-1",
+  "baseId": "wooden-fortress",
+  "type": "building",
+  "name": "Wooden Fortress",
+  "pbgid": 133438,
+  "attribName": "building_defense_wooden_fort_rus",
+  "age": 1,
+  "civs": [
+    "ru"
+  ],
+  "description": "Sturdy wooden stronghold with extensive line of sight that detects units stealth or disguises. Can be upgraded with weaponry. Attacks while garrisoned.",
+  "classes": [
+    "building",
+    "defensive_structure",
+    "has_default_building_weapons",
+    "military",
+    "outpost",
+    "scar_outpost",
+    "siegeable",
+    "tower",
+    "town_bell_target",
+    "wooden_fortress"
+  ],
+  "displayClasses": [
+    "Defensive Building"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 175,
+    "stone": 0,
+    "gold": 0,
+    "total": 175,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/wooden-fortress-1.png",
+  "hitpoints": 1750,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 501,
+    "inner_radius": 35,
+    "outer_height": -20,
+    "outer_radius": 60,
+    "base": 59.04030710172745,
+    "line": 60,
+    "height": 501
+  },
+  "garrison": {
+    "capacity": 8,
+    "classes": [
+      "infantry",
+      "infantry ranged",
+      "villager",
+      "monk",
+      "cavalry",
+      "khan"
+    ]
+  },
+  "influences": [
+    "Lumber Camps and Town Centers within the influence of a Wooden Fortress return 20% more Wood."
+  ]
+}

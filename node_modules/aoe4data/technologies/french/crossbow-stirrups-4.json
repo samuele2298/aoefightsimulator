@@ -1,0 +1,50 @@
+{
+  "id": "crossbow-stirrups-4",
+  "baseId": "crossbow-stirrups",
+  "type": "technology",
+  "name": "Crossbow Stirrups",
+  "pbgid": 172158,
+  "attribName": "upgrade_ranged_crossbow_stirrups_fre",
+  "age": 4,
+  "civs": [
+    "fr"
+  ],
+  "description": "Increase the attack speed of Arbalétriers by +25%.",
+  "classes": [
+    "french_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Arbalétrier Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 300,
+    "wood": 0,
+    "stone": 0,
+    "gold": 700,
+    "total": 1000,
+    "popcap": 0,
+    "time": 90
+  },
+  "producedBy": [
+    "archery-range"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/crossbow-stirrups-4.png",
+  "effects": [
+    {
+      "property": "attackSpeed",
+      "select": {
+        "id": [
+          "arbaletrier"
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.8,
+      "type": "passive"
+    }
+  ]
+}

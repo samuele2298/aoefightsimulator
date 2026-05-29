@@ -1,0 +1,47 @@
+{
+  "id": "hearty-rations-3",
+  "baseId": "hearty-rations",
+  "type": "technology",
+  "name": "Hearty Rations",
+  "pbgid": 200717,
+  "attribName": "upgrade_landmark_hearty_rations_sul",
+  "age": 3,
+  "civs": [
+    "de"
+  ],
+  "description": "Increase the carrying capacity of Villagers by +10.",
+  "classes": [
+    "military_upgrade",
+    "sultinate_upgrade"
+  ],
+  "displayClasses": [
+    "Villager Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "gold": 0,
+    "total": 0,
+    "popcap": 0,
+    "time": 180
+  },
+  "producedBy": [
+    "house-of-learning"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/hearty-rations-3.png",
+  "effects": [
+    {
+      "property": "carryCapacity",
+      "select": {
+        "id": [
+          "villager"
+        ]
+      },
+      "effect": "change",
+      "value": 10,
+      "type": "passive"
+    }
+  ]
+}

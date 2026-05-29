@@ -1,0 +1,38 @@
+{
+  "id": "desert-citadels-2",
+  "baseId": "desert-citadels",
+  "type": "technology",
+  "name": "Desert Citadels",
+  "pbgid": 9000052,
+  "attribName": "upgrade_desert_citadels",
+  "age": 2,
+  "civs": [
+    "kt"
+  ],
+  "description": "Improves the Desert Outposts aura on Fortresses to also increase the armor of nearby units by +1/+1.",
+  "classes": [
+    "english_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Military Upgrade"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 250,
+    "stone": 0,
+    "gold": 100,
+    "total": 350,
+    "popcap": 0,
+    "time": 25
+  },
+  "producedBy": [
+    "fortress"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/desert-citadels-2.png",
+  "effects": []
+}

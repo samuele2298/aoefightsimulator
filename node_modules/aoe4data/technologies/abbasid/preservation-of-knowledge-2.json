@@ -1,0 +1,77 @@
+{
+  "id": "preservation-of-knowledge-2",
+  "baseId": "preservation-of-knowledge",
+  "type": "technology",
+  "name": "Preservation of Knowledge",
+  "pbgid": 201795,
+  "attribName": "upgrade_cul_cheaper_research_abb",
+  "age": 2,
+  "civs": [
+    "ab"
+  ],
+  "description": "Reduce the cost of all technology and Age advancements by -20%.",
+  "classes": [
+    "abbasid_upgrade",
+    "scar_economic_upgrade",
+    "scar_feudal_age_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Research Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 25,
+    "stone": 0,
+    "gold": 75,
+    "total": 100,
+    "popcap": 0,
+    "time": 30
+  },
+  "producedBy": [
+    "house-of-wisdom"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/preservation-of-knowledge-2.png",
+  "effects": [
+    {
+      "property": "goldCost",
+      "select": {
+        "class": [
+          [
+            "technology"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.8,
+      "type": "passive"
+    },
+    {
+      "property": "foodCost",
+      "select": {
+        "class": [
+          [
+            "technology"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.8,
+      "type": "passive"
+    },
+    {
+      "property": "woodCost",
+      "select": {
+        "class": [
+          [
+            "technology"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.8,
+      "type": "passive"
+    }
+  ]
+}

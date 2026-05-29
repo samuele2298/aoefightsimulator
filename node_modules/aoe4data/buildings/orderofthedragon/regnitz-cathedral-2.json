@@ -1,0 +1,65 @@
+{
+  "id": "regnitz-cathedral-2",
+  "baseId": "regnitz-cathedral",
+  "type": "building",
+  "name": "Regnitz Cathedral",
+  "pbgid": 2581618,
+  "attribName": "building_landmark_age2_bamberg_cathedral_hre_ha_01",
+  "age": 2,
+  "civs": [
+    "od"
+  ],
+  "description": "Acts as a Monastery. All Relics generate +100% gold while garrisoned.",
+  "classes": [
+    "age2_landmark1",
+    "audio_production_landmark",
+    "building",
+    "landmark",
+    "monastery",
+    "production_building",
+    "relic_dropoff",
+    "select_all_monastery",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_feudal_age"
+  ],
+  "displayClasses": [
+    "Age III - Religious Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 1200,
+    "wood": 0,
+    "stone": 0,
+    "gold": 600,
+    "total": 1800,
+    "popcap": 0,
+    "time": 176
+  },
+  "producedBy": [
+    "gilded-villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/regnitz-cathedral-2.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": [
+    "Buildings gain the Emergency Repairs ability while within the influence of a Town Center."
+  ]
+}

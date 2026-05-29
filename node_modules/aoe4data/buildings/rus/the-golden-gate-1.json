@@ -1,0 +1,59 @@
+{
+  "id": "the-golden-gate-1",
+  "baseId": "the-golden-gate",
+  "type": "building",
+  "name": "The Golden Gate",
+  "pbgid": 133425,
+  "attribName": "building_landmark_age1_golden_gate_vladimir_control_rus",
+  "age": 1,
+  "civs": [
+    "ru"
+  ],
+  "description": "Allows the exchange of resources at a favorable rate. Generates an additional exchange every 50 seconds.",
+  "classes": [
+    "age1_landmark1",
+    "audio_production_landmark",
+    "building",
+    "landmark",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_dark_age"
+  ],
+  "displayClasses": [
+    "Age II - Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 600,
+    "popcap": 0,
+    "time": 190
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/the-golden-gate-1.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": []
+}

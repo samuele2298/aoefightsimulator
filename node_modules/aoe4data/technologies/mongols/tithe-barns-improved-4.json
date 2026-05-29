@@ -1,0 +1,81 @@
+{
+  "id": "tithe-barns-improved-4",
+  "baseId": "tithe-barns-improved",
+  "type": "technology",
+  "name": "Tithe Barns (Improved)",
+  "pbgid": 173571,
+  "attribName": "upgrade_unit_religious_tithe_barn_4_improved_mon",
+  "age": 4,
+  "civs": [
+    "mo"
+  ],
+  "description": "Relics placed in a Prayer Tent provide an income of +60 Food, +60 Wood, and +15 Stone every minute.\nIf Tithe Barns has already been researched, increase the income of Food and Wood by +20 and Stone by +5 instead.",
+  "classes": [
+    "economic_upgrade",
+    "mongol_upgrade",
+    "scar_economic_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_mongol_improved",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Religious Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 500,
+    "gold": 500,
+    "total": 1000,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "prayer-tent"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/tithe-barns-improved-4.png",
+  "effects": [
+    {
+      "property": "unknown",
+      "select": {
+        "id": [
+          "monastery",
+          "mosque",
+          "prayer-tent",
+          "regnitz-cathedral"
+        ]
+      },
+      "effect": "change",
+      "value": 20,
+      "type": "influence"
+    },
+    {
+      "property": "unknown",
+      "select": {
+        "id": [
+          "monastery",
+          "mosque",
+          "prayer-tent",
+          "regnitz-cathedral"
+        ]
+      },
+      "effect": "change",
+      "value": 5,
+      "type": "influence"
+    },
+    {
+      "property": "unknown",
+      "select": {
+        "id": [
+          "monastery",
+          "mosque",
+          "prayer-tent",
+          "regnitz-cathedral"
+        ]
+      },
+      "effect": "change",
+      "type": "influence"
+    }
+  ]
+}

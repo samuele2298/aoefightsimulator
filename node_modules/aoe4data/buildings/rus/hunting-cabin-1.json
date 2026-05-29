@@ -1,0 +1,60 @@
+{
+  "id": "hunting-cabin-1",
+  "baseId": "hunting-cabin",
+  "type": "building",
+  "name": "Hunting Cabin",
+  "pbgid": 172205,
+  "attribName": "building_hunting_cabin_rus",
+  "age": 1,
+  "civs": [
+    "ru"
+  ],
+  "description": "Villagers can drop off Food at this building. It houses technologies to improve Food gathering and produces Scouts.\nGenerates Gold based on the number of nearby trees. Trees in overlapped areas are only counted once.",
+  "classes": [
+    "audio_production_landmark",
+    "building",
+    "economy_building",
+    "emits_herding_interest",
+    "hunting_cabin_rus",
+    "land_food_deposit_2_by_2",
+    "mill",
+    "resource_drop_off",
+    "scar_gristmill",
+    "siegeable"
+  ],
+  "displayClasses": [
+    "Economy Building"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 75,
+    "stone": 0,
+    "gold": 0,
+    "total": 75,
+    "popcap": 0,
+    "time": 35
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/hunting-cabin-1.png",
+  "hitpoints": 750,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 501,
+    "inner_radius": 25,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 501
+  },
+  "influences": []
+}

@@ -1,0 +1,67 @@
+{
+  "id": "military-academy-improved-3",
+  "baseId": "military-academy-improved",
+  "type": "technology",
+  "name": "Military Academy (Improved)",
+  "pbgid": 175024,
+  "attribName": "upgrade_tech_military_academy_improved_mon",
+  "age": 3,
+  "civs": [
+    "mo"
+  ],
+  "description": "Increase the production speed of military and transport units at buildings by 53%.\nDoes not affect religious or other support units.\nIf Military Academy has already been researched, increase production speed by 20% instead.",
+  "classes": [
+    "military_upgrade",
+    "mongol_upgrade",
+    "scar_castle_age_upgrade",
+    "scar_military_upgrade",
+    "scar_mongol_improved",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Production Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 100,
+    "stone": 350,
+    "gold": 250,
+    "total": 700,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "blacksmith"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/military-academy-improved-3.png",
+  "effects": [
+    {
+      "property": "buildTime",
+      "select": {
+        "class": [
+          [
+            "infantry"
+          ],
+          [
+            "melee",
+            "cavalry"
+          ],
+          [
+            "ranged",
+            "cavalry"
+          ],
+          [
+            "siege"
+          ],
+          [
+            "transport"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.7,
+      "type": "passive"
+    }
+  ]
+}

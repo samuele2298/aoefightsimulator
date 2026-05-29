@@ -1,0 +1,54 @@
+{
+  "id": "network-of-citadels-3",
+  "baseId": "network-of-citadels",
+  "type": "technology",
+  "name": "Network of Citadels",
+  "pbgid": 2014204,
+  "attribName": "upgrade_network_of_citadels_eng",
+  "age": 3,
+  "civs": [
+    "en"
+  ],
+  "description": "Increase the Network of Castles attack speed bonus from +20% to +30%.",
+  "classes": [
+    "english_upgrade",
+    "military_upgrade",
+    "scar_castle_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Defensive Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 150,
+    "gold": 350,
+    "total": 500,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "berkshire-palace",
+    "keep",
+    "the-white-tower"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/network-of-citadels-3.png",
+  "effects": [
+    {
+      "property": "attackSpeed",
+      "select": {
+        "class": [
+          [
+            "infantry"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.1,
+      "type": "bonus"
+    }
+  ]
+}

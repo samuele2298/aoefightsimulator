@@ -1,0 +1,36 @@
+{
+  "id": "trade-bags-1",
+  "baseId": "trade-bags",
+  "type": "technology",
+  "name": "Trade Bags",
+  "pbgid": 2059610,
+  "attribName": "upgrade_imperial_trader_capacity_ott",
+  "age": 1,
+  "civs": [
+    "ot"
+  ],
+  "description": "Increase the amount of Gold Traders collect and Income from the Sultanhani Trade Network by +40%.",
+  "classes": [
+    "economic_upgrade",
+    "ottoman_upgrade",
+    "scar_economic_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Imperial Council"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "gold": 0,
+    "vizier": 1,
+    "total": 0,
+    "popcap": 0,
+    "time": 0
+  },
+  "producedBy": [],
+  "icon": "https://data.aoe4world.com/images/technologies/trade-bags-1.png",
+  "effects": []
+}

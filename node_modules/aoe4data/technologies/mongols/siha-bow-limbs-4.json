@@ -1,0 +1,51 @@
+{
+  "id": "siha-bow-limbs-4",
+  "baseId": "siha-bow-limbs",
+  "type": "technology",
+  "name": "Siha Bow Limbs",
+  "pbgid": 205553,
+  "attribName": "upgrade_mangudai_weapon_damage_mon",
+  "age": 4,
+  "civs": [
+    "mo"
+  ],
+  "description": "Increase the ranged damage of Mangudai and the Khan by +1.",
+  "classes": [
+    "mongol_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Ranged Damage Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 75,
+    "stone": 0,
+    "gold": 200,
+    "total": 275,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "archery-range"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/siha-bow-limbs-4.png",
+  "effects": [
+    {
+      "property": "rangedAttack",
+      "select": {
+        "id": [
+          "khan",
+          "mangudai",
+          "khaganate-elite-mangudai"
+        ]
+      },
+      "effect": "change",
+      "value": 1,
+      "type": "passive"
+    }
+  ]
+}

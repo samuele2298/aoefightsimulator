@@ -1,0 +1,41 @@
+{
+  "id": "veteran-mercenaries-3",
+  "baseId": "veteran-mercenaries",
+  "type": "technology",
+  "name": "Veteran Contract",
+  "pbgid": 2146757,
+  "attribName": "upgrade_unit_mercenary_3_tower_alt_byz",
+  "age": 3,
+  "civs": [
+    "by"
+  ],
+  "description": "Upgrade Hardened Mercenaries to Veteran Mercenaries.",
+  "classes": [
+    "byzantine_upgrade",
+    "military_upgrade",
+    "scar_castle_age_upgrade",
+    "scar_rogue_exclude",
+    "scar_tiered_upgrade",
+    "scar_unit_upgrade"
+  ],
+  "displayClasses": [
+    "Unit Technology 2/3"
+  ],
+  "unique": false,
+  "costs": {
+    "food": 50,
+    "wood": 0,
+    "stone": 0,
+    "gold": 125,
+    "oliveoil": 0,
+    "total": 175,
+    "popcap": 0,
+    "time": 30
+  },
+  "producedBy": [
+    "golden-horn-tower",
+    "mercenary-house"
+  ],
+  "icon": "https://data.aoe4world.com/images/upgrades/veteran-mercenaries-3.png",
+  "unlocks": ""
+}

@@ -1,0 +1,50 @@
+{
+  "id": "tranquil-venue-3",
+  "baseId": "tranquil-venue",
+  "type": "technology",
+  "name": "Tranquil Venue",
+  "pbgid": 200091,
+  "attribName": "upgrade_landmark_mosque_heal_sul",
+  "age": 3,
+  "civs": [
+    "de"
+  ],
+  "description": "Mosques restore +4 health every second to units that are out of combat.",
+  "classes": [
+    "military_upgrade",
+    "scar_castle_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade",
+    "sultinate_upgrade"
+  ],
+  "displayClasses": [
+    "Mosque Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "gold": 0,
+    "total": 0,
+    "popcap": 0,
+    "time": 180
+  },
+  "producedBy": [
+    "house-of-learning"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/tranquil-venue-3.png",
+  "effects": [
+    {
+      "property": "healingRate",
+      "select": {
+        "id": [
+          "mosque"
+        ]
+      },
+      "effect": "change",
+      "value": 4,
+      "type": "passive"
+    }
+  ]
+}

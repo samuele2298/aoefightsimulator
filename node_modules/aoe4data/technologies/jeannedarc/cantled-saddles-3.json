@@ -1,0 +1,61 @@
+{
+  "id": "cantled-saddles-3",
+  "baseId": "cantled-saddles",
+  "type": "technology",
+  "name": "Cantled Saddles",
+  "pbgid": 170541,
+  "attribName": "upgrade_cavalry_cantled_saddle_fre",
+  "age": 3,
+  "civs": [
+    "je"
+  ],
+  "description": "Increase Royal Knights' bonus damage after a charge from +3 to +10.",
+  "classes": [
+    "french_upgrade",
+    "military_upgrade",
+    "scar_castle_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Royal Knight Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 75,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 275,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "school-of-cavalry",
+    "stable"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/cantled-saddles-3.png",
+  "effects": [
+    {
+      "property": "meleeAttack",
+      "select": {
+        "id": [
+          "royal-knight"
+        ]
+      },
+      "target": {
+        "class": [
+          [
+            "infantry"
+          ],
+          [
+            "cavalry"
+          ]
+        ]
+      },
+      "effect": "change",
+      "value": 10,
+      "type": "bonus"
+    }
+  ]
+}

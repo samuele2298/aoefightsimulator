@@ -1,0 +1,61 @@
+{
+  "id": "high-trade-house-2",
+  "baseId": "high-trade-house",
+  "type": "building",
+  "name": "High Trade House",
+  "pbgid": 133432,
+  "attribName": "building_landmark_age2_muscovy_trade_company_control_rus",
+  "age": 2,
+  "civs": [
+    "ru"
+  ],
+  "description": "Generates Gold like a Hunting Cabin with the value increased by +400%, without claiming any trees. Spawns a Huntable Deer every 60 seconds.\nVillagers can drop off Food at this building.",
+  "classes": [
+    "age2_landmark1",
+    "building",
+    "hunting_cabin_rus",
+    "land_food_deposit_4_by_4",
+    "landmark",
+    "resource_drop_off",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_feudal_age"
+  ],
+  "displayClasses": [
+    "Age III - Economic Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 1200,
+    "wood": 0,
+    "stone": 0,
+    "gold": 600,
+    "total": 1800,
+    "popcap": 0,
+    "time": 220
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/high-trade-house-2.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 501,
+    "inner_radius": 37,
+    "outer_height": 0,
+    "outer_radius": 37,
+    "base": 37,
+    "line": 37,
+    "height": 501
+  },
+  "influences": []
+}

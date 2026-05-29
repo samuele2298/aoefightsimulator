@@ -1,0 +1,54 @@
+{
+  "id": "wynguard-raiders-4",
+  "baseId": "wynguard-raiders",
+  "type": "unit",
+  "name": "Wynguard Raiders",
+  "pbgid": 2075742,
+  "attribName": "unit_wynguard_raiders_eng",
+  "age": 4,
+  "civs": [
+    "en"
+  ],
+  "description": "Produces an army of 3 Horsemen and 3 Knights.",
+  "classes": [
+    "archer",
+    "audio_wynguard_raiders",
+    "can_be_converted",
+    "infantry",
+    "military",
+    "ranged",
+    "scar_age4",
+    "scar_military"
+  ],
+  "displayClasses": [
+    "Mixed Force Army"
+  ],
+  "unique": false,
+  "costs": {
+    "food": 650,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 850,
+    "popcap": 6,
+    "time": 25
+  },
+  "producedBy": [
+    "wynguard-palace"
+  ],
+  "icon": "https://data.aoe4world.com/images/units/wynguard-raiders-1.png",
+  "weapons": [],
+  "armor": [],
+  "sight": {
+    "inner_height": 0,
+    "inner_radius": 0,
+    "outer_height": 0,
+    "outer_radius": 0,
+    "base": 0,
+    "line": 0,
+    "height": 0
+  },
+  "movement": {
+    "speed": null
+  }
+}

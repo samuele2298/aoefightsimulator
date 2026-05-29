@@ -1,0 +1,59 @@
+{
+  "id": "tower-of-victory-1",
+  "baseId": "tower-of-victory",
+  "type": "building",
+  "name": "Tower of Victory",
+  "pbgid": 135886,
+  "attribName": "building_landmark_age1_qutub_minar_control_sul",
+  "age": 1,
+  "civs": [
+    "de"
+  ],
+  "description": "Enables Tower of Victory, Mosques, and Madrasas to increase the attack speed of infantry by +20% when produced within their influence.",
+  "classes": [
+    "age1_landmark1",
+    "audio_production_landmark",
+    "building",
+    "landmark",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_dark_age"
+  ],
+  "displayClasses": [
+    "Age II - Military Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 600,
+    "popcap": 0,
+    "time": 190
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/tower-of-victory-1.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": []
+}

@@ -1,0 +1,55 @@
+{
+  "id": "siege-crew-training-4",
+  "baseId": "siege-crew-training",
+  "type": "technology",
+  "name": "Siege Crew Training",
+  "pbgid": 207447,
+  "attribName": "upgrade_siege_crew_training_rus",
+  "age": 4,
+  "civs": [
+    "ru"
+  ],
+  "description": "Setup and teardown speed of Mangonels, Trebuchets, and Bombards is instant.",
+  "classes": [
+    "military_upgrade",
+    "rus_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade",
+    "scar_rogue_exclude"
+  ],
+  "displayClasses": [
+    "Mangonel",
+    "Trebuchet",
+    "and Bombard Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 100,
+    "wood": 0,
+    "stone": 0,
+    "gold": 225,
+    "total": 325,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "high-armory"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/siege-crew-training-4.png",
+  "effects": [
+    {
+      "property": "attackSpeed",
+      "select": {
+        "id": [
+          "counterweight-trebuchet",
+          "mangonel",
+          "bombard"
+        ]
+      },
+      "effect": "change",
+      "value": 0,
+      "type": "passive"
+    }
+  ]
+}

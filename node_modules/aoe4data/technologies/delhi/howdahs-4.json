@@ -1,0 +1,81 @@
+{
+  "id": "howdahs-4",
+  "baseId": "howdahs",
+  "type": "technology",
+  "name": "Howdahs",
+  "pbgid": 200139,
+  "attribName": "upgrade_landmark_siege_elephant_sul",
+  "age": 4,
+  "civs": [
+    "de"
+  ],
+  "description": "Upgrade Tower Elephants to have Elite Crossbowmen as riders instead of Archers. Tower Elephants gain +25% health and +4 ranged armor.",
+  "classes": [
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade",
+    "sultinate_upgrade"
+  ],
+  "displayClasses": [
+    "Elephant Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "gold": 0,
+    "total": 0,
+    "popcap": 0,
+    "time": 720
+  },
+  "producedBy": [
+    "archery-range"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/howdahs-4.png",
+  "effects": [
+    {
+      "property": "rangedAttack",
+      "target": {
+        "class": [
+          [
+            "heavy"
+          ]
+        ]
+      },
+      "select": {
+        "id": [
+          "tower-elephant"
+        ]
+      },
+      "effect": "change",
+      "value": 11,
+      "type": "bonus"
+    },
+    {
+      "property": "rangedArmor",
+      "select": {
+        "id": [
+          "tower-elephant",
+          "sultans-elite-tower-elephant"
+        ]
+      },
+      "effect": "change",
+      "value": 4,
+      "type": "passive"
+    },
+    {
+      "property": "hitpoints",
+      "select": {
+        "id": [
+          "tower-elephant",
+          "sultans-elite-tower-elephant"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.25,
+      "type": "passive"
+    }
+  ]
+}

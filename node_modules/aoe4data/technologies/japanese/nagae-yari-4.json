@@ -1,0 +1,69 @@
+{
+  "id": "nagae-yari-4",
+  "baseId": "nagae-yari",
+  "type": "technology",
+  "name": "Nagae Yari",
+  "pbgid": 2127555,
+  "attribName": "upgrade_long_spear_jpn",
+  "age": 4,
+  "civs": [
+    "ja"
+  ],
+  "description": "Spearmen are equipped with a stronger spear that increases weapon range by +20% and damage against cavalry by +15%.",
+  "classes": [
+    "japanese_ha_sen_upgrade",
+    "japanese_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Spearman Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 150,
+    "stone": 0,
+    "gold": 350,
+    "total": 500,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "barracks"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/nagae-yari-4.png",
+  "effects": [
+    {
+      "property": "maxRange",
+      "select": {
+        "id": [
+          "spearman"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.2,
+      "type": "passive"
+    },
+    {
+      "property": "meleeAttack",
+      "select": {
+        "id": [
+          "spearman"
+        ]
+      },
+      "target": {
+        "class": [
+          [
+            "cavalry"
+          ]
+        ]
+      },
+      "effect": "change",
+      "value": 9.2,
+      "type": "bonus"
+    }
+  ]
+}

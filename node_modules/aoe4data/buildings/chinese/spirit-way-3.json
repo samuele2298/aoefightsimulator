@@ -1,0 +1,60 @@
+{
+  "id": "spirit-way-3",
+  "baseId": "spirit-way",
+  "type": "building",
+  "name": "Spirit Way",
+  "pbgid": 145538,
+  "attribName": "building_landmark_age3_spirit_way_control_chi",
+  "age": 3,
+  "civs": [
+    "ch"
+  ],
+  "description": "Dynasty technology can be researched here for -50% cost and +150% research speed. When a dynasty unit is killed, nearby units receive +20% attack speed and +20 health over 10 seconds.\nImperial Officials can drop off taxes at this building.",
+  "classes": [
+    "age3_landmark1",
+    "audio_production_landmark",
+    "building",
+    "landmark",
+    "select_special_building",
+    "siegeable",
+    "spirit_way",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_castle_age"
+  ],
+  "displayClasses": [
+    "Age IV - Military & Technology Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 2400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 1200,
+    "total": 3600,
+    "popcap": 0,
+    "time": 125
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/spirit-way-3.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": []
+}

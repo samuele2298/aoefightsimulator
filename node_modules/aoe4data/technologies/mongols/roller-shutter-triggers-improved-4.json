@@ -1,0 +1,62 @@
+{
+  "id": "roller-shutter-triggers-improved-4",
+  "baseId": "roller-shutter-triggers-improved",
+  "type": "technology",
+  "name": "Roller Shutter Triggers (Improved)",
+  "pbgid": 175010,
+  "attribName": "upgrade_siege_roller_trigger_improved_mon",
+  "age": 4,
+  "civs": [
+    "mo"
+  ],
+  "description": "Increases Springald attack speed by +35%, grants +10% Ranged Resistance, and increases health by +10.\nIf Roller Shutter Triggers has already been researched, increase attack speed by 10% and health by +10 instead.",
+  "classes": [
+    "military_upgrade",
+    "mongol_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_mongol_improved",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Springald Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 150,
+    "stone": 500,
+    "gold": 350,
+    "total": 1000,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "siege-workshop"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/roller-shutter-triggers-improved-4.png",
+  "effects": [
+    {
+      "property": "attackSpeed",
+      "select": {
+        "id": [
+          "springald"
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.72,
+      "type": "passive"
+    },
+    {
+      "property": "rangedResistance",
+      "select": {
+        "id": [
+          "springald"
+        ]
+      },
+      "effect": "change",
+      "value": 0,
+      "type": "passive"
+    }
+  ]
+}

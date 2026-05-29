@@ -1,0 +1,55 @@
+{
+  "id": "imperial-official-1",
+  "baseId": "imperial-official",
+  "type": "unit",
+  "name": "Imperial Official",
+  "pbgid": 181406,
+  "attribName": "unit_official_1_chi",
+  "age": 1,
+  "civs": [
+    "ch"
+  ],
+  "description": "Economic support unit with no combat capability. Automatically gathers Tax (Gold) from buildings.\n+ Can supervise buildings to improve their efficiency\n- Only a certain number of Officials can exist at a time",
+  "classes": [
+    "annihilation_condition",
+    "formational",
+    "human",
+    "official",
+    "worker",
+    "xbox_support_quick_find"
+  ],
+  "displayClasses": [
+    "Worker"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 100,
+    "wood": 0,
+    "stone": 0,
+    "gold": 50,
+    "total": 150,
+    "popcap": 1,
+    "time": 20
+  },
+  "producedBy": [
+    "capital-town-center",
+    "imperial-academy",
+    "town-center"
+  ],
+  "icon": "https://data.aoe4world.com/images/units/imperial-official-1.png",
+  "hitpoints": 75,
+  "weapons": [],
+  "armor": [],
+  "sight": {
+    "inner_height": 10,
+    "inner_radius": 4,
+    "outer_height": -15,
+    "outer_radius": 28,
+    "base": 13.6,
+    "line": 28,
+    "height": 10
+  },
+  "movement": {
+    "speed": 1.125
+  }
+}

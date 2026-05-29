@@ -1,0 +1,50 @@
+{
+  "id": "cloud-of-terror-4",
+  "baseId": "cloud-of-terror",
+  "type": "technology",
+  "name": "Cloud of Terror",
+  "pbgid": 2127461,
+  "attribName": "upgrade_library_siege_works",
+  "age": 4,
+  "civs": [
+    "zx"
+  ],
+  "description": "Adds area of effect damage to Bombards.",
+  "classes": [
+    "chinese_ha_01_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Siege Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 300,
+    "stone": 0,
+    "gold": 700,
+    "total": 1000,
+    "popcap": 0,
+    "time": 30
+  },
+  "producedBy": [
+    "zhu-xis-library"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/cloud-of-terror-4.png",
+  "effects": [
+    {
+      "property": "unknown",
+      "select": {
+        "id": [
+          "bombard"
+        ]
+      },
+      "effect": "change",
+      "value": 0,
+      "type": "ability"
+    }
+  ]
+}

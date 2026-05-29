@@ -1,0 +1,54 @@
+{
+  "id": "teak-masts-3",
+  "baseId": "teak-masts",
+  "type": "technology",
+  "name": "Teak Masts",
+  "pbgid": 2033749,
+  "attribName": "upgrade_naval_teak_masts_abb",
+  "age": 3,
+  "civs": [
+    "ab"
+  ],
+  "description": "Increase the health of military ships by +10%.",
+  "classes": [
+    "abbasid_upgrade",
+    "ayyubid_cmp_upgrade",
+    "military_upgrade",
+    "scar_feudal_age_upgrade",
+    "scar_military_upgrade",
+    "scar_naval_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Naval Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 75,
+    "stone": 0,
+    "gold": 125,
+    "total": 200,
+    "popcap": 0,
+    "time": 20
+  },
+  "producedBy": [
+    "dock"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/teak-masts-2.png",
+  "effects": [
+    {
+      "property": "hitpoints",
+      "select": {
+        "class": [
+          [
+            "naval_military"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.1,
+      "type": "passive"
+    }
+  ]
+}

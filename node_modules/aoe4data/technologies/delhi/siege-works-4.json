@@ -1,0 +1,53 @@
+{
+  "id": "siege-works-4",
+  "baseId": "siege-works",
+  "type": "technology",
+  "name": "Siege Works",
+  "pbgid": 182085,
+  "attribName": "upgrade_siege_works_sul",
+  "age": 4,
+  "civs": [
+    "de"
+  ],
+  "description": "New carpentry techniques increase the health of siege units by +20%.",
+  "classes": [
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade",
+    "sultinate_upgrade"
+  ],
+  "displayClasses": [
+    "Siege Technology"
+  ],
+  "unique": false,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "gold": 0,
+    "total": 0,
+    "popcap": 0,
+    "time": 1080
+  },
+  "producedBy": [
+    "hisar-academy",
+    "madrasa"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/siege-works-4.png",
+  "effects": [
+    {
+      "property": "hitpoints",
+      "select": {
+        "class": [
+          [
+            "siege"
+          ]
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.2,
+      "type": "passive"
+    }
+  ]
+}

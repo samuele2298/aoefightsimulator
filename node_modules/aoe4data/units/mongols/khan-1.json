@@ -1,0 +1,99 @@
+{
+  "id": "khan-1",
+  "baseId": "khan",
+  "type": "unit",
+  "name": "Khan",
+  "pbgid": 129651,
+  "attribName": "unit_khan_1_mon",
+  "age": 1,
+  "civs": [
+    "mo"
+  ],
+  "description": "Ranged Cavalry Leader able to use Signal Arrows to enhance nearby military units. Reappears at a Town Center if killed.\n+ Vision and herding of a Scout\n+ Automatically improves with each Age\n- Only one Khan per Mongol player",
+  "classes": [
+    "annihilation_condition",
+    "cavalry",
+    "cavalry_archer",
+    "emits_herding_interest",
+    "find_non_siege_land_military",
+    "formational",
+    "horse",
+    "human",
+    "included_by_military_hotkeys",
+    "khan",
+    "land_military",
+    "military",
+    "ranged",
+    "scout",
+    "xbox_support_quick_find"
+  ],
+  "displayClasses": [
+    "Light Ranged Cavalry"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "gold": 0,
+    "total": 0,
+    "time": 18,
+    "popcap": 0
+  },
+  "producedBy": [],
+  "icon": "https://data.aoe4world.com/images/units/khan-1.png",
+  "hitpoints": 90,
+  "weapons": [
+    {
+      "name": "Bow",
+      "type": "ranged",
+      "damage": 2,
+      "speed": 2,
+      "range": {
+        "min": 0,
+        "max": 5
+      },
+      "modifiers": [
+        {
+          "property": "rangedAttack",
+          "target": {
+            "class": [
+              [
+                "animal",
+                "huntable"
+              ]
+            ]
+          },
+          "effect": "change",
+          "value": 1,
+          "type": "passive"
+        }
+      ],
+      "durations": {
+        "aim": 0.125,
+        "windup": 0,
+        "attack": 0.125,
+        "winddown": 0.5,
+        "reload": 1.25,
+        "setup": 0,
+        "teardown": 0,
+        "cooldown": 0
+      },
+      "attribName": "weapon_khan_1_mon",
+      "pbgid": 172306
+    }
+  ],
+  "armor": [],
+  "sight": {
+    "inner_height": 501,
+    "inner_radius": 12,
+    "outer_height": -15,
+    "outer_radius": 41,
+    "base": 40.156976744186046,
+    "line": 41,
+    "height": 501
+  },
+  "movement": {
+    "speed": 1.625
+  }
+}

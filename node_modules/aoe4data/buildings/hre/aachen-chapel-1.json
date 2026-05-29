@@ -1,0 +1,69 @@
+{
+  "id": "aachen-chapel-1",
+  "baseId": "aachen-chapel",
+  "type": "building",
+  "name": "Aachen Chapel",
+  "pbgid": 134916,
+  "attribName": "building_landmark_age1_palantine_chapel_hre",
+  "age": 1,
+  "civs": [
+    "hr"
+  ],
+  "description": "Inspires units in a large radius so long as a Prelate is garrisoned.\nActs as a drop-off point for all resource types.",
+  "classes": [
+    "age1_landmark2",
+    "audio_production_landmark",
+    "building",
+    "land_food_deposit_4_by_4",
+    "landmark",
+    "resource_drop_off",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_dark_age"
+  ],
+  "displayClasses": [
+    "Age II - Religious Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 600,
+    "popcap": 0,
+    "time": 190
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/aachen-chapel-1.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "garrison": {
+    "capacity": 1,
+    "classes": [
+      "monk"
+    ]
+  },
+  "influences": [
+    "Buildings gain the Emergency Repairs ability while within the influence of a Town Center."
+  ]
+}

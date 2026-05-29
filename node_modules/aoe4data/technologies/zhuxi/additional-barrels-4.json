@@ -1,0 +1,50 @@
+{
+  "id": "additional-barrels-4",
+  "baseId": "additional-barrels",
+  "type": "technology",
+  "name": "Additional Barrels",
+  "pbgid": 217078,
+  "attribName": "upgrade_gunpowder_cost_chi",
+  "age": 4,
+  "civs": [
+    "zx"
+  ],
+  "description": "Nest of Bees receive 3 additional Rocket Arrows.",
+  "classes": [
+    "chinese_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Nest of Bees Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 400,
+    "stone": 0,
+    "gold": 800,
+    "total": 1200,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "siege-workshop"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/additional-barrels-4.png",
+  "effects": [
+    {
+      "property": "burst",
+      "select": {
+        "id": [
+          "nest-of-bees",
+          "clocktower-nest-of-bees"
+        ]
+      },
+      "effect": "change",
+      "value": 3,
+      "type": "passive"
+    }
+  ]
+}

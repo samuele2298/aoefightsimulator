@@ -1,0 +1,63 @@
+{
+  "id": "specialized-pick-improved-2",
+  "baseId": "specialized-pick-improved",
+  "type": "technology",
+  "name": "Specialized Pick (Improved)",
+  "pbgid": 171825,
+  "attribName": "upgrade_econ_resource_gold_harvest_rate_2_improved_mon",
+  "age": 2,
+  "civs": [
+    "mo"
+  ],
+  "description": "Increase Villagers' gathering rate for Gold by 35%.\nIf Specialized Pick has already been researched, increase it by 20% instead.",
+  "classes": [
+    "economic_upgrade",
+    "mongol_upgrade",
+    "scar_economic_upgrade",
+    "scar_feudal_age_upgrade",
+    "scar_mongol_improved",
+    "scar_tiered_upgrade"
+  ],
+  "displayClasses": [
+    "Mining Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 50,
+    "stone": 500,
+    "gold": 100,
+    "total": 650,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "ger",
+    "steppe-redoubt"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/specialized-pick-improved-2.png",
+  "effects": [
+    {
+      "property": "goldGatherRate",
+      "select": {
+        "id": [
+          "villager"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.17,
+      "type": "passive"
+    },
+    {
+      "property": "stoneGatherRate",
+      "select": {
+        "id": [
+          "villager"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.17,
+      "type": "passive"
+    }
+  ]
+}

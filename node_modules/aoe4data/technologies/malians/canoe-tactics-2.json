@@ -1,0 +1,75 @@
+{
+  "id": "canoe-tactics-2",
+  "baseId": "canoe-tactics",
+  "type": "technology",
+  "name": "Canoe Tactics",
+  "pbgid": 2102140,
+  "attribName": "upgrade_naval_javelin_ships_mal",
+  "age": 2,
+  "civs": [
+    "ma"
+  ],
+  "description": "Archer Ships fire an additional 2 Javelin weapons.",
+  "classes": [
+    "malian_upgrade",
+    "military_upgrade",
+    "scar_feudal_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Naval Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 50,
+    "stone": 0,
+    "gold": 125,
+    "total": 175,
+    "popcap": 0,
+    "time": 20
+  },
+  "producedBy": [
+    "dock"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/canoe-tactics-2.png",
+  "effects": [
+    {
+      "property": "rangedAttack",
+      "select": {
+        "class": [
+          [
+            "archer",
+            "ship"
+          ]
+        ]
+      },
+      "effect": "change",
+      "value": 1.6,
+      "type": "passive"
+    },
+    {
+      "property": "rangedAttack",
+      "select": {
+        "class": [
+          [
+            "archer",
+            "ship"
+          ]
+        ]
+      },
+      "target": {
+        "class": [
+          [
+            "incendiary",
+            "ship"
+          ]
+        ]
+      },
+      "effect": "change",
+      "value": 20,
+      "type": "bonus"
+    }
+  ]
+}

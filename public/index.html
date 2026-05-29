@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AoE4 Fight Simulator</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="panel control-bar">
+        <div class="brand-wrap">
+          <h1>AoE4 Fight Simulator</h1>
+        </div>
+
+        <div class="control-group start-group">
+          <button id="start-btn" class="btn primary">Lancia Simulazione</button>
+          <div id="status" class="status">Idle</div>
+        </div>
+
+        <div class="control-group map-group">
+          <label>Mappa
+            <select id="environment">
+              <option value="dry-arabia" selected>Dry Arabia</option>
+              <option value="forest-belts">Forest Belts</option>
+              <option value="random-clusters">Random Clusters</option>
+              <option value="mini-hideout">Mini Hideout</option>
+              <option value="around-landmark">Around Landmark</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="control-group template-group">
+          <label for="template-select">Template</label>
+          <div class="template-inline">
+            <select id="template-select"></select>
+            <button id="load-template-btn" class="btn">Load</button>
+          </div>
+        </div>
+
+        <div class="control-group replay-group">
+          <div class="replay-actions">
+            <button id="playback-toggle" class="btn icon-btn" title="Play" aria-label="Play">▶</button>
+            <button id="replay-reset" class="btn icon-btn" title="Restart" aria-label="Restart">↺</button>
+            <button id="zoom-in" class="btn icon-btn" title="Zoom in" aria-label="Zoom in">＋</button>
+            <button id="zoom-out" class="btn icon-btn" title="Zoom out" aria-label="Zoom out">－</button>
+          </div>
+          <div class="speed-row">
+            <button class="btn speed-btn is-active" data-speed="1">x1</button>
+            <button class="btn speed-btn" data-speed="2">x2</button>
+            <button class="btn speed-btn" data-speed="4">x4</button>
+            <button class="btn speed-btn" data-speed="8">x8</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="arena-layout">
+        <aside class="panel team-panel team-panel-left">
+          <section class="team-card" id="teamA-card">
+            <h2>Team A</h2>
+            <label>Civ
+              <div class="civ-select-row">
+                <img id="teamA-civ-icon" class="civ-icon" alt="Team A civilization banner" />
+                <select id="teamA-civ"></select>
+              </div>
+            </label>
+            <label>Eta
+              <select id="teamA-age">
+                <option value="1">I</option>
+                <option value="2" selected>II</option>
+                <option value="3">III</option>
+                <option value="4">IV</option>
+              </select>
+            </label>
+            <label>Formazione
+              <select id="teamA-formation">
+                <option value="normal">Normale</option>
+                <option value="line">Linea</option>
+              </select>
+            </label>
+            <label>Strategia
+              <select id="teamA-strategy">
+                <option value="straight">Straight Fight</option>
+              </select>
+            </label>
+            <div class="team-tech-row">
+              <button id="teamA-tech-btn" type="button" class="btn">Tech Tree</button>
+              <div id="teamA-tech-summary" class="tech-summary">Nessuna tech selezionata</div>
+            </div>
+            <label class="focus-fire-toggle">
+              <input id="teamA-focus-enabled" type="checkbox" />
+              Focus Fire (modificatore)
+            </label>
+            <label id="teamA-focus-wrap" class="focus-target-wrap">Unit che fa Focus Fire (tuo team)
+              <select id="teamA-focus-source"></select>
+            </label>
+            <label id="teamA-focus-target-wrap" class="focus-target-wrap">Focus Target (enemy unit)
+              <select id="teamA-focus-target"></select>
+            </label>
+            <div class="unit-picker">
+              <div class="unit-select-row">
+                <img id="teamA-unit-icon" class="unit-icon" alt="Team A selected unit icon" />
+                <select id="teamA-unit-select"></select>
+              </div>
+              <input type="number" min="1" max="200" value="10" id="teamA-unit-count" />
+              <button type="button" data-team="A" class="btn add-unit">+ Add</button>
+            </div>
+            <label id="teamA-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Modalita Desert Raider
+              <select id="teamA-unit-attack-mode">
+                <option value="ranged" selected>Ranged</option>
+                <option value="melee">Melee</option>
+              </select>
+            </label>
+            <ul id="teamA-unit-list" class="unit-list"></ul>
+          </section>
+        </aside>
+
+        <main class="panel view-panel">
+          <section class="battlefield-wrap">
+            <h2>Battlefield 2D</h2>
+            <canvas id="battlefield" width="1320" height="760"></canvas>
+          </section>
+          <div id="playback-info" class="status playback-info">Replay pronto quando arriva una simulazione.</div>
+        </main>
+
+        <aside class="panel team-panel team-panel-right">
+          <section class="team-card" id="teamB-card">
+            <h2>Team B</h2>
+            <label>Civ
+              <div class="civ-select-row">
+                <img id="teamB-civ-icon" class="civ-icon" alt="Team B civilization banner" />
+                <select id="teamB-civ"></select>
+              </div>
+            </label>
+            <label>Eta
+              <select id="teamB-age">
+                <option value="1">I</option>
+                <option value="2" selected>II</option>
+                <option value="3">III</option>
+                <option value="4">IV</option>
+              </select>
+            </label>
+            <label>Formazione
+              <select id="teamB-formation">
+                <option value="normal">Normale</option>
+                <option value="line">Linea</option>
+              </select>
+            </label>
+            <label>Strategia
+              <select id="teamB-strategy">
+                <option value="straight">Straight Fight</option>
+              </select>
+            </label>
+            <div class="team-tech-row">
+              <button id="teamB-tech-btn" type="button" class="btn">Tech Tree</button>
+              <div id="teamB-tech-summary" class="tech-summary">Nessuna tech selezionata</div>
+            </div>
+            <label class="focus-fire-toggle">
+              <input id="teamB-focus-enabled" type="checkbox" />
+              Focus Fire (modificatore)
+            </label>
+            <label id="teamB-focus-wrap" class="focus-target-wrap">Unit che fa Focus Fire (tuo team)
+              <select id="teamB-focus-source"></select>
+            </label>
+            <label id="teamB-focus-target-wrap" class="focus-target-wrap">Focus Target (enemy unit)
+              <select id="teamB-focus-target"></select>
+            </label>
+            <div class="unit-picker">
+              <div class="unit-select-row">
+                <img id="teamB-unit-icon" class="unit-icon" alt="Team B selected unit icon" />
+                <select id="teamB-unit-select"></select>
+              </div>
+              <input type="number" min="1" max="200" value="10" id="teamB-unit-count" />
+              <button type="button" data-team="B" class="btn add-unit">+ Add</button>
+            </div>
+            <label id="teamB-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Modalita Desert Raider
+              <select id="teamB-unit-attack-mode">
+                <option value="ranged" selected>Ranged</option>
+                <option value="melee">Melee</option>
+              </select>
+            </label>
+            <ul id="teamB-unit-list" class="unit-list"></ul>
+          </section>
+        </aside>
+      </section>
+
+      <section class="insights-layout">
+        <section class="panel chart-wrap">
+          <h2>Resource Value Over Time</h2>
+          <canvas id="resource-chart" height="130"></canvas>
+        </section>
+
+        <section class="panel result-wrap">
+          <h2>Result</h2>
+          <pre id="result">No result yet.</pre>
+        </section>
+      </section>
+
+      <section class="panel advanced-analytics-panel" id="advanced-analytics-panel">
+        <h2>Advanced Fight Analytics</h2>
+        <p class="advanced-analytics-subtle">Statistiche di supporto per leggere impatto di unita, tech, formazione e ambiente.</p>
+        <div id="advanced-analytics" class="advanced-analytics-grid">
+          <div class="analytics-empty">Avvia una simulazione per vedere il pannello completo.</div>
+        </div>
+      </section>
+    </div>
+
+    <dialog id="teamA-tech-dialog" class="tech-dialog">
+      <form method="dialog" class="tech-dialog-form">
+        <h3>Team A Tech Tree</h3>
+        <div class="tech-bulk-actions">
+          <button id="teamA-tech-clear" type="button" class="btn">Azzera tutte</button>
+          <button id="teamA-tech-select-all" type="button" class="btn">Seleziona tutte</button>
+        </div>
+        <div id="teamA-tech-options" class="tech-options"></div>
+        <div class="actions">
+          <button class="btn" value="cancel">Annulla</button>
+          <button id="teamA-tech-apply" type="button" class="btn primary">Applica</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="teamB-tech-dialog" class="tech-dialog">
+      <form method="dialog" class="tech-dialog-form">
+        <h3>Team B Tech Tree</h3>
+        <div class="tech-bulk-actions">
+          <button id="teamB-tech-clear" type="button" class="btn">Azzera tutte</button>
+          <button id="teamB-tech-select-all" type="button" class="btn">Seleziona tutte</button>
+        </div>
+        <div id="teamB-tech-options" class="tech-options"></div>
+        <div class="actions">
+          <button class="btn" value="cancel">Annulla</button>
+          <button id="teamB-tech-apply" type="button" class="btn primary">Applica</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/js/app.js"></script>
+  </body>
+</html>

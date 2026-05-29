@@ -1,0 +1,52 @@
+{
+  "id": "horticulture-improved-2",
+  "baseId": "horticulture-improved",
+  "type": "technology",
+  "name": "Horticulture (Improved)",
+  "pbgid": 171295,
+  "attribName": "upgrade_econ_resource_food_harvest_rate_2_improved_mon",
+  "age": 2,
+  "civs": [
+    "mo"
+  ],
+  "description": "Increase Villagers' gathering rate for Food by 30%. Does not apply to hunted meat.\nIf Horticulture has already been researched, increase it by 20% instead.",
+  "classes": [
+    "economic_upgrade",
+    "mongol_upgrade",
+    "scar_economic_upgrade",
+    "scar_feudal_age_upgrade",
+    "scar_mongol_improved",
+    "scar_tiered_upgrade"
+  ],
+  "displayClasses": [
+    "Food Gathering Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 50,
+    "stone": 500,
+    "gold": 100,
+    "total": 650,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "ger",
+    "steppe-redoubt"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/horticulture-improved-2.png",
+  "effects": [
+    {
+      "property": "foodGatherRate",
+      "select": {
+        "id": [
+          "villager"
+        ]
+      },
+      "effect": "multiply",
+      "value": 1.18,
+      "type": "passive"
+    }
+  ]
+}

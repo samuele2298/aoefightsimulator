@@ -1,0 +1,114 @@
+{
+  "id": "saharan-trade-network-1",
+  "baseId": "saharan-trade-network",
+  "type": "building",
+  "name": "Saharan Trade Network",
+  "pbgid": 2063101,
+  "attribName": "building_landmark_age1_landmarka_mal",
+  "age": 1,
+  "civs": [
+    "ma"
+  ],
+  "description": "Acts as a Toll Outpost that comes with Defensive Javelin Emplacement researched. Unlocks Javelin Emplacement for Outposts.\nAll Traders and Trade Ships taxed will generate Food equal to the taxed Gold at this Landmark. All other Toll Outposts will generate 50% of taxed Gold as Food.",
+  "classes": [
+    "age1_landmark1",
+    "audio_production_landmark",
+    "building",
+    "defensive_structure",
+    "landmark",
+    "select_special_building",
+    "siegeable",
+    "tax_outpost",
+    "town_bell_target",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_dark_age"
+  ],
+  "displayClasses": [
+    "Age II - Defensive Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 600,
+    "popcap": 0,
+    "time": 190
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/saharan-trade-network-1.png",
+  "hitpoints": 5000,
+  "weapons": [
+    {
+      "name": "Bow",
+      "type": "ranged",
+      "damage": 6,
+      "speed": 3.875,
+      "range": {
+        "min": 0,
+        "max": 6
+      },
+      "modifiers": [
+        {
+          "property": "rangedAttack",
+          "target": {
+            "class": [
+              [
+                "naval",
+                "unit"
+              ]
+            ]
+          },
+          "effect": "change",
+          "value": 10,
+          "type": "passive"
+        }
+      ],
+      "durations": {
+        "aim": 0,
+        "windup": 0,
+        "attack": 0.125,
+        "winddown": 0,
+        "reload": 1.75,
+        "setup": 0,
+        "teardown": 0,
+        "cooldown": 2
+      },
+      "burst": {
+        "count": 3
+      },
+      "attribName": "weapon_outpost_arrows_garrison",
+      "pbgid": 171016
+    }
+  ],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 501,
+    "inner_radius": 35,
+    "outer_height": -20,
+    "outer_radius": 60,
+    "base": 59.04030710172745,
+    "line": 60,
+    "height": 501
+  },
+  "garrison": {
+    "capacity": 10,
+    "classes": [
+      "infantry",
+      "infantry ranged",
+      "villager",
+      "monk",
+      "cavalry"
+    ]
+  },
+  "influences": []
+}

@@ -1,0 +1,38 @@
+{
+  "id": "superior-mobility-1",
+  "baseId": "superior-mobility",
+  "type": "technology",
+  "name": "Superior Mobility",
+  "pbgid": 178718,
+  "attribName": "upgrade_unit_town_center_faster_packing_1_mon",
+  "age": 1,
+  "civs": [
+    "mo"
+  ],
+  "description": "Packed buildings move and pack/unpack 50% faster.",
+  "classes": [
+    "economic_upgrade",
+    "mongol_upgrade",
+    "scar_economic_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Packing Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 25,
+    "stone": 0,
+    "gold": 75,
+    "total": 100,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "ovoo",
+    "the-white-stupa"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/superior-mobility-1.png",
+  "unlocks": ""
+}

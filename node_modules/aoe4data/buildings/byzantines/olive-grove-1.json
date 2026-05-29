@@ -1,0 +1,57 @@
+{
+  "id": "olive-grove-1",
+  "baseId": "olive-grove",
+  "type": "building",
+  "name": "Olive Grove",
+  "pbgid": 2104744,
+  "attribName": "building_resource_farm_byz",
+  "age": 1,
+  "civs": [
+    "by"
+  ],
+  "description": "Harvestable Food source. Use a Villager to gather Food from the Olive Grove.\nOnly one Villager can work each Olive Grove.\nByzantine Villagers gather Olive Oil equal to 20% of Food gathered.",
+  "classes": [
+    "building",
+    "farm",
+    "farm_field",
+    "resource",
+    "siegeable"
+  ],
+  "displayClasses": [
+    "Food Source",
+    "Building"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 75,
+    "stone": 0,
+    "gold": 0,
+    "oliveoil": 0,
+    "total": 75,
+    "popcap": 0,
+    "time": 6
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/olive-grove-1.png",
+  "hitpoints": 300,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 0,
+    "inner_radius": 0,
+    "outer_height": 0,
+    "outer_radius": 0,
+    "base": 0,
+    "line": 0,
+    "height": 0
+  },
+  "influences": []
+}

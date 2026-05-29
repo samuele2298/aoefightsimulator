@@ -1,0 +1,51 @@
+{
+  "id": "billmen-2",
+  "baseId": "billmen",
+  "type": "technology",
+  "name": "Billmen",
+  "pbgid": 5000163,
+  "attribName": "upgrade_billmen_lan",
+  "age": 2,
+  "civs": [
+    "hl"
+  ],
+  "description": "Spearmen equip tempered Bills, reducing the armor of enemies by -1 when attacking.",
+  "classes": [
+    "english_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Spearman Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 0,
+    "wood": 175,
+    "stone": 0,
+    "gold": 100,
+    "total": 275,
+    "popcap": 0,
+    "time": 25
+  },
+  "producedBy": [
+    "barracks"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/billmen-2.png",
+  "effects": [
+    {
+      "property": "rangedArmor",
+      "value": 0,
+      "effect": "multiply",
+      "type": "passive"
+    },
+    {
+      "property": "meleeArmor",
+      "value": 0,
+      "effect": "multiply",
+      "type": "passive"
+    }
+  ]
+}

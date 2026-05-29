@@ -1,0 +1,65 @@
+{
+  "id": "palace-of-the-sultan-3",
+  "baseId": "palace-of-the-sultan",
+  "type": "building",
+  "name": "Palace of the Sultan",
+  "pbgid": 135891,
+  "attribName": "building_landmark_age3_bijay_mandal_palace_control_sul",
+  "age": 3,
+  "civs": [
+    "de"
+  ],
+  "description": "Automatically produces Sultan's Elite Tower Elephants. Garrison up to 4 Scholars in the Landmark to increase production speed.",
+  "classes": [
+    "age3_landmark1",
+    "building",
+    "landmark",
+    "military_only_production",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_castle_age"
+  ],
+  "displayClasses": [
+    "Age IV - Military Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 2400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 1200,
+    "total": 3600,
+    "popcap": 0,
+    "time": 250
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/palace-of-the-sultan-3.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "garrison": {
+    "capacity": 4,
+    "classes": [
+      "monk"
+    ]
+  },
+  "influences": []
+}

@@ -1,0 +1,56 @@
+{
+  "id": "stone-bounty-improved-4",
+  "baseId": "stone-bounty-improved",
+  "type": "technology",
+  "name": "Stone Bounty (Improved)",
+  "pbgid": 205808,
+  "attribName": "upgrade_raid_stone_bounty_improved_mon",
+  "age": 4,
+  "civs": [
+    "mo"
+  ],
+  "description": "Add +75 Stone to the raid income for igniting a building.\nIf Stone Bounty has already been researched, add +25 Stone to the raid income for igniting a building.",
+  "classes": [
+    "mongol_upgrade",
+    "scar_economic_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_mongol_improved",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Raiding Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 100,
+    "wood": 0,
+    "stone": 325,
+    "gold": 225,
+    "total": 650,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "ovoo",
+    "the-white-stupa"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/stone-bounty-improved-4.png",
+  "effects": [
+    {
+      "property": "unknown",
+      "select": {
+        "class": [
+          [
+            "cavalry"
+          ],
+          [
+            "infantry"
+          ]
+        ]
+      },
+      "effect": "change",
+      "value": 50,
+      "type": "ability"
+    }
+  ]
+}

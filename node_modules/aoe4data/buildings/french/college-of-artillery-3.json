@@ -1,0 +1,62 @@
+{
+  "id": "college-of-artillery-3",
+  "baseId": "college-of-artillery",
+  "type": "building",
+  "name": "College of Artillery",
+  "pbgid": 132786,
+  "attribName": "building_landmark_age3_ecole_de_poudre_a_canon_fre",
+  "age": 3,
+  "civs": [
+    "fr"
+  ],
+  "description": "Produces the Royal Artillery versions of the Cannon, Ribauldequin, and Culverin, which do +30% more damage.\nUnlocks the Artillery ability for all Cannons.\nContains Siege and Gunpowder Technologies, trains units and researches technologies 50% faster.",
+  "classes": [
+    "age3_landmark2",
+    "audio_production_landmark",
+    "building",
+    "landmark",
+    "military_only_production",
+    "military_production_building",
+    "select_special_building",
+    "siege_production_landmark",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_castle_age"
+  ],
+  "displayClasses": [
+    "Age IV - Military Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 2400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 1200,
+    "total": 3600,
+    "popcap": 0,
+    "time": 250
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/college-of-artillery-3.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": []
+}

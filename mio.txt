@@ -1,0 +1,13 @@
+FEAT:
+
+FIX:
+
+	- feat dato un esercito e l altro -> equal cost e equal number
+
+
+---
+Obbiettivo riuscire a simulare facilmente l outcome di un fight per capire quanto impatta a livello trade di risorse
+
+Dati -> https://github.com/aoe4world/data/ (tutti i dati di unita attaco bonus ecc...)
+
+

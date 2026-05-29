@@ -1,0 +1,64 @@
+{
+  "id": "imperial-fleet-4",
+  "baseId": "imperial-fleet",
+  "type": "technology",
+  "name": "Imperial Fleet",
+  "pbgid": 2101765,
+  "attribName": "upgrade_naval_imperial_fleet_ott",
+  "age": 4,
+  "civs": [
+    "ot"
+  ],
+  "description": "Increase the production speed of Gunpowder Ships by 25% and their movement speed by 25%.",
+  "classes": [
+    "military_upgrade",
+    "ottoman_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Naval Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 150,
+    "wood": 0,
+    "stone": 0,
+    "gold": 350,
+    "vizier": 0,
+    "total": 500,
+    "popcap": 0,
+    "time": 45
+  },
+  "producedBy": [
+    "dock"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/imperial-fleet-4.png",
+  "effects": [
+    {
+      "property": "productionSpeed",
+      "select": {
+        "id": [
+          "carrack",
+          "grand-galley"
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.8,
+      "type": "passive"
+    },
+    {
+      "property": "moveSpeed",
+      "select": {
+        "id": [
+          "carrack",
+          "grand-galley"
+        ]
+      },
+      "effect": "multiply",
+      "value": 0.8,
+      "type": "passive"
+    }
+  ]
+}

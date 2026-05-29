@@ -1,0 +1,465 @@
+const TEAM_COLORS = {
+  A: '#4aa3ff',
+  B: '#ff6b5d',
+};
+
+const UNIT_STATE_HIGHLIGHTS = {
+  charge: '#ffd84a',
+};
+
+export function createBattlefieldRenderer(canvas) {
+  const ctx = canvas.getContext('2d');
+  const iconCache = new Map();
+  const imageCache = new Map();
+
+  let mapSize = { width: 120, height: 72 };
+  let latestUnits = [];
+  let latestObstacles = [];
+  let teamMeta = {
+    A: { civAbbr: 'A', civName: 'Team A', banner: '' },
+    B: { civAbbr: 'B', civName: 'Team B', banner: '' },
+  };
+  let animationId = null;
+  let zoom = 1;
+  let cameraX = mapSize.width / 2;
+  let cameraY = mapSize.height / 2;
+  let dragState = null;
+
+  canvas.style.touchAction = 'none';
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function getViewport() {
+    const padding = 42;
+    const usableWidth = canvas.width - padding * 2;
+    const usableHeight = canvas.height - padding * 2;
+    const baseScale = Math.min(usableWidth / mapSize.width, usableHeight / mapSize.height);
+    const scale = baseScale * zoom;
+
+    const visibleWorldWidth = canvas.width / scale;
+    const visibleWorldHeight = canvas.height / scale;
+
+    const minX = visibleWorldWidth / 2;
+    const maxX = Math.max(minX, mapSize.width - visibleWorldWidth / 2);
+    const minY = visibleWorldHeight / 2;
+    const maxY = Math.max(minY, mapSize.height - visibleWorldHeight / 2);
+
+    cameraX = clamp(cameraX, minX, maxX);
+    cameraY = clamp(cameraY, minY, maxY);
+
+    return {
+      scale,
+      offsetX: canvas.width / 2 - cameraX * scale,
+      offsetY: canvas.height / 2 - cameraY * scale,
+    };
+  }
+
+  function canDragNavigate() {
+    return zoom > 1.001;
+  }
+
+  function updateCursor() {
+    canvas.classList.toggle('is-draggable', canDragNavigate() && !dragState);
+    canvas.classList.toggle('is-dragging', Boolean(dragState));
+  }
+
+  function toCanvas(x, y) {
+    const viewport = getViewport();
+    return {
+      x: viewport.offsetX + x * viewport.scale,
+      y: viewport.offsetY + y * viewport.scale,
+    };
+  }
+
+  function getIcon(iconKey) {
+    if (!iconKey) {
+      return null;
+    }
+    if (!iconCache.has(iconKey)) {
+      const img = new Image();
+      img.src = `/data/images/units/${iconKey}`;
+      iconCache.set(iconKey, img);
+    }
+    return iconCache.get(iconKey);
+  }
+
+  function getImage(src) {
+    if (!src) {
+      return null;
+    }
+    if (!imageCache.has(src)) {
+      const img = new Image();
+      img.src = src;
+      imageCache.set(src, img);
+    }
+    return imageCache.get(src);
+  }
+
+  function drawBackgroundGrid() {
+    const viewport = getViewport();
+    const width = mapSize.width * viewport.scale;
+    const height = mapSize.height * viewport.scale;
+
+    ctx.strokeStyle = 'rgba(214, 186, 131, 0.14)';
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i <= mapSize.width; i += 5) {
+      const x = viewport.offsetX + i * viewport.scale;
+      ctx.beginPath();
+      ctx.moveTo(x, viewport.offsetY);
+      ctx.lineTo(x, viewport.offsetY + height);
+      ctx.stroke();
+    }
+
+    for (let i = 0; i <= mapSize.height; i += 5) {
+      const y = viewport.offsetY + i * viewport.scale;
+      ctx.beginPath();
+      ctx.moveTo(viewport.offsetX, y);
+      ctx.lineTo(viewport.offsetX + width, y);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(247, 222, 171, 0.5)';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(viewport.offsetX, viewport.offsetY, width, height);
+  }
+
+  function drawObstacles() {
+    const viewport = getViewport();
+
+    const styleMap = {
+      forest: {
+        fill: 'rgba(45, 96, 52, 0.62)',
+        stroke: 'rgba(123, 184, 106, 0.82)',
+      },
+      rock: {
+        fill: 'rgba(87, 95, 107, 0.62)',
+        stroke: 'rgba(172, 181, 196, 0.82)',
+      },
+      water: {
+        fill: 'rgba(38, 92, 130, 0.58)',
+        stroke: 'rgba(116, 182, 224, 0.82)',
+      },
+      ruin: {
+        fill: 'rgba(106, 82, 54, 0.6)',
+        stroke: 'rgba(192, 162, 117, 0.82)',
+      },
+      landmark: {
+        fill: 'rgba(142, 108, 64, 0.58)',
+        stroke: 'rgba(230, 197, 129, 0.9)',
+      },
+    };
+
+    for (const obstacle of latestObstacles) {
+      const point = toCanvas(obstacle.x, obstacle.y);
+      const obstacleStyle = styleMap[obstacle.style] || styleMap.forest;
+
+      ctx.fillStyle = obstacleStyle.fill;
+      ctx.strokeStyle = obstacleStyle.stroke;
+
+      if (obstacle.shape === 'square' && typeof obstacle.size === 'number') {
+        const size = obstacle.size * viewport.scale;
+        ctx.fillRect(point.x - size / 2, point.y - size / 2, size, size);
+        ctx.strokeRect(point.x - size / 2, point.y - size / 2, size, size);
+      } else {
+        const radius = obstacle.radius * viewport.scale;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawUnit(unit) {
+    if (unit.hp <= 0) {
+      return;
+    }
+
+    const point = toCanvas(unit.x, unit.y);
+    const size = clamp(14 * zoom + 8, 16, 46);
+    const hasChargeHighlight = Boolean(unit.chargeActive);
+    const highlightColor = hasChargeHighlight
+      ? UNIT_STATE_HIGHLIGHTS.charge
+      : TEAM_COLORS[unit.team];
+
+    ctx.fillStyle = `${highlightColor}33`;
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size * 0.48, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `${highlightColor}dd`;
+    ctx.lineWidth = hasChargeHighlight ? 2.6 : 1.5;
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size * 0.5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const icon = getIcon(unit.iconKey);
+    if (icon && icon.complete) {
+      ctx.save();
+      ctx.drawImage(icon, point.x - size / 2, point.y - size / 2, size, size);
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = `${highlightColor}55`;
+      ctx.fillRect(point.x - size / 2, point.y - size / 2, size, size);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = highlightColor || '#ddd';
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const hpRatio = Math.max(0, Math.min(1, unit.maxHp > 0 ? unit.hp / unit.maxHp : 0));
+    const barWidth = 26;
+    const barHeight = 4;
+    const barX = point.x - barWidth / 2;
+    const barY = point.y + size * 0.65;
+
+    ctx.fillStyle = '#2d1d1d';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    ctx.fillStyle = hpRatio > 0.5 ? '#3dcf7e' : hpRatio > 0.2 ? '#d2c14b' : '#d95b5b';
+    ctx.fillRect(barX, barY, barWidth * hpRatio, barHeight);
+  }
+
+  function buildLegendRows(team) {
+    const counts = new Map();
+
+    for (const unit of latestUnits) {
+      if (unit.team !== team || unit.hp <= 0) {
+        continue;
+      }
+      const key = unit.unitId || unit.name;
+      if (!counts.has(key)) {
+        counts.set(key, {
+          name: unit.name || key,
+          iconKey: unit.iconKey,
+          count: 0,
+          unitCost: unit.resourceValue || 0,
+          totalCost: 0,
+        });
+      }
+      const row = counts.get(key);
+      row.count += 1;
+      row.totalCost = row.count * row.unitCost;
+    }
+
+    return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+  }
+
+  function drawLegendBlock(team, x, y) {
+    const meta = teamMeta[team] || { civAbbr: team, civName: `Team ${team}`, banner: '' };
+    const banner = getImage(meta.banner);
+    const rows = buildLegendRows(team);
+    const alive = rows.reduce((sum, row) => sum + row.count, 0);
+    const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0);
+    const width = 360;
+    const headerHeight = 44;
+    const rowHeight = 30;
+    const height = headerHeight + 14 + rows.length * rowHeight;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = 'rgba(12, 14, 20, 0.9)';
+    ctx.strokeStyle = `${TEAM_COLORS[team]}d0`;
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeRect(x, y, width, height);
+    ctx.restore();
+
+    ctx.fillStyle = `${TEAM_COLORS[team]}2f`;
+    ctx.fillRect(x, y, width, headerHeight);
+
+    if (banner && banner.complete) {
+      ctx.drawImage(banner, x + 10, y + 9, 44, 26);
+    } else {
+      ctx.fillStyle = `${TEAM_COLORS[team]}80`;
+      ctx.fillRect(x + 10, y + 9, 44, 26);
+    }
+
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = '600 14px "Trebuchet MS", "Segoe UI", sans-serif';
+    ctx.fillText(`${meta.civName} (${meta.civAbbr.toUpperCase()})`, x + 62, y + 24);
+    ctx.fillStyle = '#cfd6e4';
+    ctx.font = '12px "Trebuchet MS", "Segoe UI", sans-serif';
+    ctx.fillText(`Team ${team} | Alive ${alive} | Value ${totalCost}`, x + 62, y + 39);
+
+    ctx.strokeStyle = 'rgba(228, 233, 243, 0.18)';
+    ctx.beginPath();
+    ctx.moveTo(x + 10, y + headerHeight + 2);
+    ctx.lineTo(x + width - 10, y + headerHeight + 2);
+    ctx.stroke();
+
+    rows.forEach((row, idx) => {
+      const lineY = y + headerHeight + 20 + idx * rowHeight;
+      const icon = getIcon(row.iconKey);
+      if (icon && icon.complete) {
+        ctx.drawImage(icon, x + 12, lineY - 16, 22, 22);
+      } else {
+        ctx.fillStyle = TEAM_COLORS[team];
+        ctx.beginPath();
+        ctx.arc(x + 23, lineY - 6, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#edf2fb';
+      ctx.font = '600 14px "Trebuchet MS", "Segoe UI", sans-serif';
+      ctx.fillText(row.name, x + 42, lineY - 1);
+      ctx.fillStyle = '#f7d58f';
+      ctx.font = '13px "Trebuchet MS", "Segoe UI", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`x${row.count}   ${row.totalCost}`, x + width - 12, lineY - 1);
+      ctx.textAlign = 'left';
+
+      if (idx < rows.length - 1) {
+        ctx.strokeStyle = 'rgba(228, 233, 243, 0.12)';
+        ctx.beginPath();
+        ctx.moveTo(x + 12, lineY + 8);
+        ctx.lineTo(x + width - 12, lineY + 8);
+        ctx.stroke();
+      }
+    });
+  }
+
+  function renderFrame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackgroundGrid();
+    drawObstacles();
+
+    for (const unit of latestUnits) {
+      drawUnit(unit);
+    }
+
+    drawLegendBlock('A', 10, 10);
+    drawLegendBlock('B', canvas.width - 370, 10);
+
+    animationId = requestAnimationFrame(renderFrame);
+  }
+
+  function setMapSize(size) {
+    if (size && size.width && size.height) {
+      mapSize = size;
+      cameraX = mapSize.width / 2;
+      cameraY = mapSize.height / 2;
+    }
+  }
+
+  function setUnits(units) {
+    latestUnits = Array.isArray(units) ? units : [];
+  }
+
+  function setZoom(value) {
+    zoom = clamp(Number(value) || 1, 0.6, 7.5);
+    updateCursor();
+  }
+
+  function getZoom() {
+    return zoom;
+  }
+
+  function setObstacles(obstacles) {
+    latestObstacles = Array.isArray(obstacles) ? obstacles : [];
+  }
+
+  function setTeamMeta(meta) {
+    if (meta && meta.A && meta.B) {
+      teamMeta = meta;
+    }
+  }
+
+  function pan(deltaX, deltaY) {
+    cameraX += deltaX;
+    cameraY += deltaY;
+    getViewport();
+  }
+
+  function resetView() {
+    zoom = 1;
+    cameraX = mapSize.width / 2;
+    cameraY = mapSize.height / 2;
+    updateCursor();
+  }
+
+  function reset() {
+    latestUnits = [];
+    latestObstacles = [];
+    resetView();
+  }
+
+  function start() {
+    if (!animationId) {
+      animationId = requestAnimationFrame(renderFrame);
+    }
+  }
+
+  canvas.addEventListener('pointerdown', (event) => {
+    if (!canDragNavigate() || event.button !== 0) {
+      return;
+    }
+
+    dragState = {
+      pointerId: event.pointerId,
+      lastX: event.clientX,
+      lastY: event.clientY,
+    };
+
+    canvas.setPointerCapture(event.pointerId);
+    updateCursor();
+  });
+
+  canvas.addEventListener('pointermove', (event) => {
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const viewport = getViewport();
+    const deltaX = event.clientX - dragState.lastX;
+    const deltaY = event.clientY - dragState.lastY;
+    dragState.lastX = event.clientX;
+    dragState.lastY = event.clientY;
+
+    pan(-deltaX / viewport.scale, -deltaY / viewport.scale);
+  });
+
+  function endDrag(event) {
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    dragState = null;
+    updateCursor();
+  }
+
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('lostpointercapture', () => {
+    dragState = null;
+    updateCursor();
+  });
+
+  updateCursor();
+
+  function stop() {
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+  }
+
+  return {
+    start,
+    stop,
+    reset,
+    setUnits,
+    setMapSize,
+    setObstacles,
+    setTeamMeta,
+    setZoom,
+    getZoom,
+    pan,
+    resetView,
+  };
+}

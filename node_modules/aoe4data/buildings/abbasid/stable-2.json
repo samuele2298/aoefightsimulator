@@ -1,0 +1,61 @@
+{
+  "id": "stable-2",
+  "baseId": "stable",
+  "type": "building",
+  "name": "Stable",
+  "pbgid": 199642,
+  "attribName": "building_unit_cavalry_control_abb",
+  "age": 2,
+  "civs": [
+    "ab"
+  ],
+  "description": "Produces cavalry military units.",
+  "classes": [
+    "building",
+    "golden_age_tier_1_building_abb",
+    "golden_age_tier_2_building_abb",
+    "military_only_production",
+    "military_production_building",
+    "production_building",
+    "scar_stable",
+    "siegeable",
+    "stable"
+  ],
+  "displayClasses": [
+    "Military Building"
+  ],
+  "unique": false,
+  "costs": {
+    "food": 0,
+    "wood": 150,
+    "stone": 0,
+    "gold": 0,
+    "total": 150,
+    "popcap": 0,
+    "time": 30
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/stable-2.png",
+  "hitpoints": 1500,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": [
+    "Buildings within influence gain +5 Fire Armor.\nStructures built within House of Wisdom influence area help progress to the Golden Age and unlock additional bonuses."
+  ]
+}

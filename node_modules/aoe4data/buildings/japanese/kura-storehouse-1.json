@@ -1,0 +1,79 @@
+{
+  "id": "kura-storehouse-1",
+  "baseId": "kura-storehouse",
+  "type": "building",
+  "name": "Kura Storehouse",
+  "pbgid": 2122032,
+  "attribName": "building_landmark_age1_storehouse_jpn",
+  "age": 1,
+  "civs": [
+    "ja"
+  ],
+  "description": "Universal drop-off location that creates a Farm around the Landmark every 50 seconds — generates Wood instead when farmland becomes full.",
+  "classes": [
+    "age1_landmark2",
+    "audio_production_landmark",
+    "building",
+    "economy_building",
+    "land_food_deposit_4_by_4",
+    "landmark",
+    "lumber_camp",
+    "mill",
+    "mine",
+    "mining_camp",
+    "resource_drop_off",
+    "select_special_building",
+    "siegeable",
+    "storehouse",
+    "town_bell_target",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_dark_age"
+  ],
+  "displayClasses": [
+    "Age II - Economic Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 400,
+    "wood": 0,
+    "stone": 0,
+    "gold": 200,
+    "total": 600,
+    "popcap": 0,
+    "time": 190
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/kura-storehouse-1.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "garrison": {
+    "capacity": 4,
+    "classes": [
+      "infantry",
+      "villager",
+      "infantry ranged",
+      "monk",
+      "cavalry",
+      "khan"
+    ]
+  },
+  "influences": []
+}

@@ -1,0 +1,65 @@
+{
+  "id": "shaolin-monastery-2",
+  "baseId": "shaolin-monastery",
+  "type": "building",
+  "name": "Shaolin Monastery",
+  "pbgid": 4136240,
+  "attribName": "building_landmark_age2_shaolin_temple_control_chi_ha_01",
+  "age": 2,
+  "civs": [
+    "zx"
+  ],
+  "description": "Unique Monastery capable of producing Shaolin Monks. From the Yuan Dynasty onwards, Shaolin Monks can also be produced from Pagodas.",
+  "classes": [
+    "age2_landmark1",
+    "audio_production_landmark",
+    "building",
+    "landmark",
+    "military_production_building",
+    "monastery",
+    "production_building",
+    "relic_dropoff",
+    "scar_monastery",
+    "select_all_monastery",
+    "select_special_building",
+    "siegeable",
+    "town_center_or_landmark",
+    "wonder",
+    "wonder_feudal_age"
+  ],
+  "displayClasses": [
+    "Age III - Religious Landmark"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 1200,
+    "wood": 0,
+    "stone": 0,
+    "gold": 600,
+    "total": 1800,
+    "popcap": 0,
+    "time": 220
+  },
+  "producedBy": [
+    "villager"
+  ],
+  "icon": "https://data.aoe4world.com/images/buildings/shaolin-monastery-2.png",
+  "hitpoints": 5000,
+  "weapons": [],
+  "armor": [
+    {
+      "type": "ranged",
+      "value": 50
+    }
+  ],
+  "sight": {
+    "inner_height": 8,
+    "inner_radius": 20,
+    "outer_height": 0,
+    "outer_radius": 25,
+    "base": 25,
+    "line": 25,
+    "height": 8
+  },
+  "influences": []
+}

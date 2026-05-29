@@ -1,0 +1,41 @@
+{
+  "id": "elite-mercenaries-4",
+  "baseId": "elite-mercenaries",
+  "type": "technology",
+  "name": "Elite Contract",
+  "pbgid": 2146758,
+  "attribName": "upgrade_unit_mercenary_4_tower_alt_byz",
+  "age": 4,
+  "civs": [
+    "by"
+  ],
+  "description": "Upgrade Veteran Mercenaries to Elite Mercenaries.",
+  "classes": [
+    "byzantine_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_rogue_exclude",
+    "scar_tiered_upgrade",
+    "scar_unit_upgrade"
+  ],
+  "displayClasses": [
+    "Unit Technology 3/3"
+  ],
+  "unique": false,
+  "costs": {
+    "food": 300,
+    "wood": 0,
+    "stone": 0,
+    "gold": 700,
+    "oliveoil": 0,
+    "total": 1000,
+    "popcap": 0,
+    "time": 60
+  },
+  "producedBy": [
+    "golden-horn-tower",
+    "mercenary-house"
+  ],
+  "icon": "https://data.aoe4world.com/images/upgrades/elite-mercenaries-4.png",
+  "unlocks": ""
+}

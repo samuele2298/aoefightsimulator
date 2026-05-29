@@ -1,0 +1,84 @@
+{
+  "id": "mangudai-3",
+  "baseId": "mangudai",
+  "type": "unit",
+  "name": "Veteran Mangudai",
+  "pbgid": 129667,
+  "attribName": "unit_horsearcher_3_mon",
+  "age": 3,
+  "civs": [
+    "mo"
+  ],
+  "description": "Confounding mobile ranged cavalry that can fire at a slower rate while moving.\n+ High rate of fire\n- Low weapon range",
+  "classes": [
+    "annihilation_condition",
+    "archer",
+    "cavalry",
+    "cavalry_archer",
+    "find_non_siege_land_military",
+    "formational",
+    "horse",
+    "human",
+    "included_by_military_hotkeys",
+    "land_military",
+    "mangudai",
+    "military",
+    "ranged"
+  ],
+  "displayClasses": [
+    "Light Ranged Cavalry"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 90,
+    "wood": 0,
+    "stone": 0,
+    "gold": 60,
+    "total": 150,
+    "popcap": 1,
+    "time": 28
+  },
+  "producedBy": [
+    "archery-range"
+  ],
+  "icon": "https://data.aoe4world.com/images/units/mangudai-3.png",
+  "hitpoints": 105,
+  "weapons": [
+    {
+      "name": "Bow",
+      "type": "ranged",
+      "damage": 6,
+      "speed": 0.875,
+      "range": {
+        "min": 0,
+        "max": 3.5
+      },
+      "modifiers": [],
+      "durations": {
+        "aim": 0.125,
+        "windup": 0,
+        "attack": 0.125,
+        "winddown": 0.5,
+        "reload": 0.125,
+        "setup": 0,
+        "teardown": 0,
+        "cooldown": 0
+      },
+      "attribName": "weapon_horsearcher_3_mon",
+      "pbgid": 131185
+    }
+  ],
+  "armor": [],
+  "sight": {
+    "inner_height": 10,
+    "inner_radius": 10,
+    "outer_height": -15,
+    "outer_radius": 34,
+    "base": 19.6,
+    "line": 34,
+    "height": 10
+  },
+  "movement": {
+    "speed": 1.5625
+  }
+}

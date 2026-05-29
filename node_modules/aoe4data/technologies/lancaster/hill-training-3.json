@@ -1,0 +1,38 @@
+{
+  "id": "hill-training-3",
+  "baseId": "hill-training",
+  "type": "technology",
+  "name": "Hill Training",
+  "pbgid": 9001247,
+  "attribName": "upgrade_hill_training_lan",
+  "age": 3,
+  "civs": [
+    "hl"
+  ],
+  "description": "Training in rugged terrain increases Hobelar charge damage by +125% and production speed by +100%.",
+  "classes": [
+    "english_upgrade",
+    "military_upgrade",
+    "scar_imperial_age_upgrade",
+    "scar_military_upgrade",
+    "scar_nontiered_upgrade"
+  ],
+  "displayClasses": [
+    "Cavalry Technology"
+  ],
+  "unique": true,
+  "costs": {
+    "food": 50,
+    "wood": 0,
+    "stone": 0,
+    "gold": 100,
+    "total": 150,
+    "popcap": 0,
+    "time": 25
+  },
+  "producedBy": [
+    "kings-college"
+  ],
+  "icon": "https://data.aoe4world.com/images/technologies/hill-training-3.png",
+  "effects": []
+}
