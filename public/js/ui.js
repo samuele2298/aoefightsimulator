@@ -11,6 +11,10 @@ const state = {
     A: new Map(),
     B: new Map(),
   },
+  unitTechCatalogByTeam: {
+    A: new Map(),
+    B: new Map(),
+  },
   selectedUnits: {
     A: [],
     B: [],
@@ -19,6 +23,11 @@ const state = {
     A: [],
     B: [],
   },
+  selectedUnitTechsByUnit: {
+    A: new Map(),
+    B: new Map(),
+  },
+  activeUnitTechDialog: null,
   civByAbbr: {},
 };
 
@@ -168,6 +177,11 @@ const TECH_TREE_OPTIONS = [
     shortDescription: '-15% attack speed ranged',
   },
 ];
+
+const GENERIC_TECH_IDS = new Set(
+  TECH_TREE_OPTIONS
+    .flatMap((option) => (Array.isArray(option.requiresAnyTechIds) ? option.requiresAnyTechIds : []))
+);
 
 const templates = [
   {
@@ -323,6 +337,7 @@ function teamElements(team) {
     unitCount: byId(`team${team}-unit-count`),
     unitAttackModeWrap: byId(`team${team}-unit-attack-mode-wrap`),
     unitAttackMode: byId(`team${team}-unit-attack-mode`),
+    resourceSummary: byId(`team${team}-resource-summary`),
     unitList: byId(`team${team}-unit-list`),
   };
 }
@@ -514,6 +529,328 @@ async function loadTechsForTeam(team, { resetSelection = false } = {}) {
   updateTechSummary(team);
 }
 
+function unitClassTokens(def) {
+  return [
+    ...(Array.isArray(def.classes) ? def.classes : []),
+    ...(Array.isArray(def.displayClasses) ? def.displayClasses : []),
+  ].map((entry) => String(entry).toLowerCase());
+}
+
+function unitSelectionKeyFromItem(item) {
+  return item.selectionKey || `${item.unitId}::default`;
+}
+
+function effectTargetsUnit(effect, unit) {
+  if (!effect || !effect.select || !unit) {
+    return false;
+  }
+
+  const select = effect.select;
+  const unitId = String(unit.id || '').toLowerCase();
+  const idMatches = Array.isArray(select.id)
+    ? select.id.some((id) => String(id).toLowerCase() === unitId)
+    : false;
+
+  let classMatches = false;
+  if (Array.isArray(select.class)) {
+    const unitClasses = unitClassTokens(unit);
+    classMatches = select.class.some((group) =>
+      Array.isArray(group)
+      && group.every((value) => unitClasses.some((entry) => entry.includes(String(value).toLowerCase())))
+    );
+  }
+
+  return idMatches || classMatches;
+}
+
+function techTextMentionsUnit(tech, unit) {
+  const text = `${tech.name || ''} ${tech.description || ''}`.toLowerCase();
+  const name = String(unit.name || '').toLowerCase();
+  const id = String(unit.id || '').toLowerCase();
+  const normalizedId = id.replace(/-/g, ' ');
+
+  if ((name && text.includes(name)) || (normalizedId && text.includes(normalizedId))) {
+    return true;
+  }
+
+  const idTokens = normalizedId.split(/\s+/).filter((token) => token.length >= 4);
+  if (idTokens.length && idTokens.every((token) => text.includes(token))) {
+    return true;
+  }
+
+  const aliases = {
+    'man-at-arms': ['maa', 'man at arms'],
+    'crossbowman': ['crossbow', 'arbaletrier'],
+    'hardened-spearman': ['spearman'],
+    'early-man-at-arms': ['man at arms'],
+  };
+  const unitAliases = aliases[id] || [];
+  return unitAliases.some((alias) => text.includes(alias));
+}
+
+function isCombatRelevantUnitEffect(effect) {
+  const property = String(effect && effect.property ? effect.property : '').toLowerCase();
+  return [
+    'hitpoints',
+    'movespeed',
+    'movementspeed',
+    'meleearmor',
+    'rangedarmor',
+    'meleeattack',
+    'rangedattack',
+    'attack',
+    'attackspeed',
+    'maxrange',
+  ].includes(property);
+}
+
+function hasExplicitUnitSelector(effect) {
+  if (!effect || !effect.select) {
+    return false;
+  }
+  const select = effect.select;
+  return (Array.isArray(select.id) && select.id.length > 0)
+    || (Array.isArray(select.class) && select.class.length > 0);
+}
+
+function resolveUnitTechOptionsForUnit(team, unitDef) {
+  const age = getTeamAge(team);
+  const catalog = state.unitTechCatalogByTeam[team] || new Map();
+  const allTechs = [...catalog.values()];
+
+  return allTechs
+    .filter((tech) => !GENERIC_TECH_IDS.has(tech.id))
+    .filter((tech) => {
+      const effects = Array.isArray(tech.effects) ? tech.effects : [];
+      const combatEffects = effects.filter((effect) => isCombatRelevantUnitEffect(effect));
+      if (!combatEffects.length) {
+        return false;
+      }
+
+      const targetsBySelector = combatEffects.some((effect) => effectTargetsUnit(effect, unitDef));
+      if (targetsBySelector) {
+        return true;
+      }
+
+      const hasSelector = combatEffects.some((effect) => hasExplicitUnitSelector(effect));
+      if (hasSelector) {
+        return false;
+      }
+
+      return techTextMentionsUnit(tech, unitDef);
+    })
+    .map((tech) => {
+      const minAge = typeof tech.age === 'number' ? tech.age : 1;
+      const available = age >= minAge;
+      return {
+        ...tech,
+        available,
+        reason: available ? '' : `Richiede Eta ${minAge}`,
+      };
+    })
+    .sort((a, b) => {
+      if (a.age !== b.age) {
+        return a.age - b.age;
+      }
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+}
+
+function getAvailableUnitTechKeysForUnit(team, unitDef) {
+  return resolveUnitTechOptionsForUnit(team, unitDef)
+    .filter((option) => option.available)
+    .map((option) => option.id);
+}
+
+function selectedUnitTechMap(team) {
+  return state.selectedUnitTechsByUnit[team];
+}
+
+function getSelectedUnitTechIdsForItem(team, item, options, { autoInit = true } = {}) {
+  const map = selectedUnitTechMap(team);
+  const key = unitSelectionKeyFromItem(item);
+  const allIds = new Set(options.map((option) => option.id));
+  const defaultIds = options.filter((option) => option.available).map((option) => option.id);
+
+  if (!map.has(key)) {
+    if (autoInit) {
+      map.set(key, [...defaultIds]);
+    }
+    return autoInit ? [...defaultIds] : [];
+  }
+
+  const current = map.get(key);
+  const sanitized = current.filter((id) => allIds.has(id));
+  map.set(key, sanitized);
+  return sanitized;
+}
+
+function setSelectedUnitTechIdsForItem(team, item, ids) {
+  const map = selectedUnitTechMap(team);
+  const key = unitSelectionKeyFromItem(item);
+  map.set(key, [...ids]);
+}
+
+function removeSelectedUnitTechsForItem(team, item) {
+  const map = selectedUnitTechMap(team);
+  map.delete(unitSelectionKeyFromItem(item));
+}
+
+function renderActiveUnitTechDialog() {
+  const context = state.activeUnitTechDialog;
+  if (!context) {
+    return;
+  }
+
+  const titleEl = byId('unit-tech-item-title');
+  const optionsWrap = byId('unit-tech-item-options');
+  const chargeWrap = byId('unit-tech-item-charge-wrap');
+  const chargeInput = byId('unit-tech-item-charge-active');
+  if (!titleEl || !optionsWrap) {
+    return;
+  }
+
+  titleEl.textContent = `${context.team} - ${context.unitName} Unit Tech`;
+  if (chargeWrap && chargeInput) {
+    chargeWrap.hidden = !context.supportsChargeToggle;
+    chargeInput.checked = context.chargeEnabled;
+  }
+  optionsWrap.innerHTML = '';
+
+  for (const option of context.options) {
+    const row = document.createElement('div');
+    row.className = `tech-option${option.available ? '' : ' is-disabled'}`;
+
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = option.id;
+    input.checked = context.selectedIds.includes(option.id);
+    input.disabled = !option.available;
+
+    const textWrap = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'tech-option-title';
+    title.textContent = option.name || option.id;
+
+    const meta = document.createElement('div');
+    meta.className = 'tech-option-meta';
+    meta.textContent = `Eta ${option.age || 1}${option.reason ? ` | ${option.reason}` : ''}`;
+
+    const description = document.createElement('div');
+    description.className = 'tech-option-meta';
+    description.textContent = option.description || 'Effetto tech specifico unita';
+
+    textWrap.appendChild(title);
+    textWrap.appendChild(meta);
+    textWrap.appendChild(description);
+
+    label.appendChild(input);
+    label.appendChild(textWrap);
+    row.appendChild(label);
+    optionsWrap.appendChild(row);
+  }
+}
+
+function openUnitTechDialogForItem(team, item, unitDef) {
+  const dialog = byId('unit-tech-item-dialog');
+  if (!dialog) {
+    return;
+  }
+  const options = resolveUnitTechOptionsForUnit(team, unitDef);
+  const supportsChargeToggle = unitCanConfigureCharge(unitDef);
+  if (!options.length && !supportsChargeToggle) {
+    return;
+  }
+
+  const selectedIds = getSelectedUnitTechIdsForItem(team, item, options, { autoInit: true });
+  state.activeUnitTechDialog = {
+    team,
+    item,
+    options,
+    selectedIds,
+    unitName: item.name,
+    supportsChargeToggle,
+    chargeEnabled: item.chargeEnabled !== false,
+  };
+
+  renderActiveUnitTechDialog();
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+  }
+}
+
+async function loadUnitTechsForTeam(team, { resetSelection = false } = {}) {
+  const el = teamElements(team);
+  const payload = await getJson(
+    `/api/data/technologies?civ=${encodeURIComponent(el.civ.value)}&age=4`
+  );
+  const data = Array.isArray(payload.data) ? payload.data : [];
+  state.unitTechCatalogByTeam[team] = new Map(data.map((item) => [item.id, item]));
+
+  if (resetSelection) {
+    selectedUnitTechMap(team).clear();
+  }
+}
+
+function bindUnitTechDialogHandlers() {
+  const dialog = byId('unit-tech-item-dialog');
+  const clearBtn = byId('unit-tech-item-clear');
+  const selectAllBtn = byId('unit-tech-item-select-all');
+  const applyBtn = byId('unit-tech-item-apply');
+  const optionsWrap = byId('unit-tech-item-options');
+  const chargeInput = byId('unit-tech-item-charge-active');
+
+  if (!dialog || !clearBtn || !selectAllBtn || !applyBtn || !optionsWrap) {
+    return;
+  }
+
+  clearBtn.addEventListener('click', () => {
+    if (!state.activeUnitTechDialog) {
+      return;
+    }
+    for (const input of optionsWrap.querySelectorAll('input[type="checkbox"]')) {
+      input.checked = false;
+    }
+    state.activeUnitTechDialog.selectedIds = [];
+  });
+
+  selectAllBtn.addEventListener('click', () => {
+    if (!state.activeUnitTechDialog) {
+      return;
+    }
+    const selected = [];
+    for (const input of optionsWrap.querySelectorAll('input[type="checkbox"]')) {
+      if (!input.disabled) {
+        input.checked = true;
+        selected.push(input.value);
+      }
+    }
+    state.activeUnitTechDialog.selectedIds = selected;
+  });
+
+  applyBtn.addEventListener('click', () => {
+    if (!state.activeUnitTechDialog) {
+      return;
+    }
+
+    const selected = [...optionsWrap.querySelectorAll('input[type="checkbox"]:checked')]
+      .map((input) => input.value);
+    const { team, item } = state.activeUnitTechDialog;
+    setSelectedUnitTechIdsForItem(team, item, selected);
+    if (chargeInput && state.activeUnitTechDialog.supportsChargeToggle) {
+      item.chargeEnabled = Boolean(chargeInput.checked);
+    }
+    dialog.close();
+    state.activeUnitTechDialog = null;
+    renderUnitList(team);
+  });
+
+  dialog.addEventListener('close', () => {
+    state.activeUnitTechDialog = null;
+  });
+}
+
 function fillSelect(select, options, valueKey, labelKey) {
   select.innerHTML = '';
   for (const option of options) {
@@ -629,6 +966,15 @@ function resolveCivAbbr(civHint) {
 function unitIsRanged(def) {
   return Array.isArray(def.weapons)
     && def.weapons.some((weapon) => weapon.type === 'ranged' && weapon.range && weapon.range.max > 1);
+}
+
+function unitCanConfigureCharge(def) {
+  const id = String(def && def.id ? def.id : '').toLowerCase();
+  const excluded = id === 'sofa' || id === 'camel-raider' || id === 'camel-rider' || (id.includes('camel') && id.includes('raider'));
+  if (excluded) {
+    return false;
+  }
+  return id.includes('knight') || id.includes('horseman');
 }
 
 function unitIconDataUri(unit) {
@@ -748,10 +1094,56 @@ function getUnitResourceTotal(def) {
   return food + wood + gold + stone;
 }
 
+function formatResourceNumber(value) {
+  return new Intl.NumberFormat('it-IT').format(Math.max(0, Math.round(Number(value) || 0)));
+}
+
+function computeTeamResourceBreakdown(team, defsById) {
+  const totals = {
+    food: 0,
+    gold: 0,
+    wood: 0,
+  };
+
+  for (const item of state.selectedUnits[team]) {
+    const unitDef = defsById.get(item.unitId);
+    if (!unitDef || !unitDef.costs) {
+      continue;
+    }
+    const count = Math.max(0, Number(item.count) || 0);
+    totals.food += count * (Number(unitDef.costs.food || 0) || 0);
+    totals.gold += count * (Number(unitDef.costs.gold || 0) || 0);
+    totals.wood += count * (Number(unitDef.costs.wood || 0) || 0);
+  }
+
+  totals.total = totals.food + totals.gold + totals.wood;
+  return totals;
+}
+
+function renderTeamResourceSummary(team, defsById) {
+  const { resourceSummary } = teamElements(team);
+  if (!resourceSummary) {
+    return;
+  }
+
+  const totals = computeTeamResourceBreakdown(team, defsById);
+  const totalEl = resourceSummary.querySelector('.unit-resource-summary-total');
+  const breakdownEl = resourceSummary.querySelector('.unit-resource-summary-breakdown');
+
+  if (totalEl) {
+    totalEl.textContent = `Totale: ${formatResourceNumber(totals.total)}`;
+  }
+  if (breakdownEl) {
+    breakdownEl.textContent = `Cibo ${formatResourceNumber(totals.food)} • Oro ${formatResourceNumber(totals.gold)} • Legna ${formatResourceNumber(totals.wood)}`;
+  }
+}
+
 function renderUnitList(team) {
   const { unitList } = teamElements(team);
   const items = state.selectedUnits[team];
   const defsById = new Map(state.unitsByTeam[team].map((u) => [u.id, u]));
+
+  renderTeamResourceSummary(team, defsById);
 
   unitList.innerHTML = '';
   for (const item of items) {
@@ -776,9 +1168,31 @@ function renderUnitList(team) {
     const unitDef = defsById.get(item.unitId);
     const unitResourceTotal = getUnitResourceTotal(unitDef);
     const batchResourceTotal = item.count * unitResourceTotal;
-    count.textContent = `x${item.count} • ${batchResourceTotal} res`;
+    const techOptions = unitDef ? resolveUnitTechOptionsForUnit(team, unitDef) : [];
+    const supportsChargeToggle = unitDef ? unitCanConfigureCharge(unitDef) : false;
+    const selectedTechIds = techOptions.length
+      ? getSelectedUnitTechIdsForItem(team, item, techOptions, { autoInit: true })
+      : [];
+    const techSuffix = techOptions.length ? ` • tech ${selectedTechIds.length}/${techOptions.length}` : '';
+    const chargeSuffix = supportsChargeToggle && item.chargeEnabled === false ? ' • charge off' : '';
+    count.textContent = `x${item.count} • ${batchResourceTotal} res${techSuffix}${chargeSuffix}`;
     meta.appendChild(title);
     meta.appendChild(count);
+
+    const actions = document.createElement('div');
+    actions.className = 'unit-batch-actions';
+
+    if ((techOptions.length || supportsChargeToggle) && unitDef) {
+      const techBtn = document.createElement('button');
+      techBtn.type = 'button';
+      techBtn.className = 'btn unit-batch-tech-btn';
+      techBtn.textContent = '⚙';
+      techBtn.title = 'Unit tech e impostazioni unita';
+      techBtn.addEventListener('click', () => {
+        openUnitTechDialogForItem(team, item, unitDef);
+      });
+      actions.appendChild(techBtn);
+    }
 
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -788,6 +1202,7 @@ function renderUnitList(team) {
     btn.style.marginTop = '0';
     btn.addEventListener('click', () => {
       const removeKey = item.selectionKey || `${item.unitId}::default`;
+      removeSelectedUnitTechsForItem(team, item);
       state.selectedUnits[team] = state.selectedUnits[team].filter((u) => {
         const key = u.selectionKey || `${u.unitId}::default`;
         return key !== removeKey;
@@ -796,9 +1211,11 @@ function renderUnitList(team) {
       refreshAllFocusTargetOptions();
     });
 
+    actions.appendChild(btn);
+
     li.appendChild(icon);
     li.appendChild(meta);
-    li.appendChild(btn);
+    li.appendChild(actions);
     unitList.appendChild(li);
   }
 }
@@ -909,7 +1326,10 @@ async function loadUnitsForTeam(team, { resetSelected = false, resetTechSelectio
 
   const payload = await getJson(`/api/data/units?civ=${encodeURIComponent(civ)}&age=${encodeURIComponent(age)}`);
   state.unitsByTeam[team] = (payload.data || []).filter((unit) => !isBannedUnit(unit));
-  await loadTechsForTeam(team, { resetSelection: resetTechSelection });
+  await Promise.all([
+    loadTechsForTeam(team, { resetSelection: resetTechSelection }),
+    loadUnitTechsForTeam(team, { resetSelection: resetTechSelection }),
+  ]);
 
   fillSelect(el.unitSelect, state.unitsByTeam[team], 'id', 'name');
   updateUnitSelectIcon(team);
@@ -917,8 +1337,15 @@ async function loadUnitsForTeam(team, { resetSelected = false, resetTechSelectio
   const allowed = new Set(state.unitsByTeam[team].map((u) => u.id));
   if (resetSelected) {
     state.selectedUnits[team] = [];
+    selectedUnitTechMap(team).clear();
   } else {
     state.selectedUnits[team] = state.selectedUnits[team].filter((item) => allowed.has(item.unitId));
+    const aliveKeys = new Set(state.selectedUnits[team].map((item) => unitSelectionKeyFromItem(item)));
+    for (const key of [...selectedUnitTechMap(team).keys()]) {
+      if (!aliveKeys.has(key)) {
+        selectedUnitTechMap(team).delete(key);
+      }
+    }
   }
 
   renderUnitList(team);
@@ -938,6 +1365,7 @@ async function applyTeamTemplate(team, templateTeam) {
   el.strategy.value = templateTeam.strategy || 'straight';
   el.focusEnabled.checked = false;
   state.selectedTechs[team] = [];
+  selectedUnitTechMap(team).clear();
 
   await loadUnitsForTeam(team, { resetSelected: true });
 
@@ -953,6 +1381,7 @@ async function applyTeamTemplate(team, templateTeam) {
       unitId: found.id,
       name: found.name,
       count: spec.count || 1,
+      chargeEnabled: true,
     });
   }
 
@@ -1051,13 +1480,19 @@ function attachTeamHandlers(team) {
       existing.count = count;
       existing.attackMode = attackMode;
     } else {
-      state.selectedUnits[team].push({
+      const created = {
         unitId: chosenId,
         count,
         name: def.name,
         attackMode,
         selectionKey,
-      });
+        chargeEnabled: true,
+      };
+      state.selectedUnits[team].push(created);
+
+      const techOptions = resolveUnitTechOptionsForUnit(team, def);
+      const defaults = techOptions.filter((option) => option.available).map((option) => option.id);
+      setSelectedUnitTechIdsForItem(team, created, defaults);
     }
 
     renderUnitList(team);
@@ -1087,6 +1522,13 @@ function readTeamConfig(team) {
       unitId: u.unitId,
       count: u.count,
       attackMode: u.attackMode || null,
+      chargeEnabled: u.chargeEnabled !== false,
+      unitTechs: getSelectedUnitTechIdsForItem(
+        team,
+        u,
+        resolveUnitTechOptionsForUnit(team, state.unitsByTeam[team].find((unit) => unit.id === u.unitId) || u),
+        { autoInit: true }
+      ),
     })),
   };
 }
@@ -1149,6 +1591,7 @@ export async function initUi() {
   a.civ.value = 'en';
   b.civ.value = 'fr';
 
+  bindUnitTechDialogHandlers();
   attachTeamHandlers('A');
   attachTeamHandlers('B');
 

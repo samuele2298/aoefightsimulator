@@ -5,7 +5,7 @@ const HORSEMAN_CHARGE_MULTIPLIER = 1.35;
 const ROYAL_KNIGHT_CHARGE_FLAT_BONUS = 3;
 
 class SimUnit {
-  constructor({ id, team, def, x, y }) {
+  constructor({ id, team, def, x, y, chargeEnabled = true }) {
     this.id = id;
     this.team = team;
     this.def = def;
@@ -22,6 +22,7 @@ class SimUnit {
 
     this.lastCombatTick = Number.NEGATIVE_INFINITY;
     this.deflectiveArmorCharge = this.hasDeflectiveArmor();
+    this.chargeEnabled = chargeEnabled !== false;
     this.chargeReady = this.canUseCharge();
     this.chargeApproachActive = false;
     this.royalKnightChargeBonusTicks = 0;
@@ -77,6 +78,10 @@ class SimUnit {
   }
 
   canUseCharge() {
+    if (!this.chargeEnabled) {
+      return false;
+    }
+
     const id = String(this.def.id || '').toLowerCase();
     const isCamelRaider = id.includes('camel') && id.includes('raider');
     if (id === 'sofa' || id === 'camel-rider' || id === 'camel-raider' || isCamelRaider) {

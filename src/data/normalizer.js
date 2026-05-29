@@ -149,6 +149,9 @@ function normalizeTechnologies(techRaw, options = {}) {
         civs: entry.civs || variation.civs || [],
         description: variation.description || entry.description || '',
         classes: entry.classes || [],
+        displayClasses: variation.displayClasses || entry.displayClasses || [],
+        producedBy: Array.isArray(variation.producedBy) ? variation.producedBy : [],
+        effects: Array.isArray(variation.effects) ? variation.effects : [],
       };
     })
     .filter(Boolean)

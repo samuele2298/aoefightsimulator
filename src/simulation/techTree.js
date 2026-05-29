@@ -84,9 +84,212 @@ function roundStat(value) {
   return Math.round(value * 1000) / 1000;
 }
 
-function applyTechTreeToUnitDef(def, selectedTechs = []) {
+function allUnitClasses(def) {
+  return [
+    ...(Array.isArray(def.classes) ? def.classes : []),
+    ...(Array.isArray(def.displayClasses) ? def.displayClasses : []),
+  ].map((entry) => String(entry).toLowerCase());
+}
+
+function unitMatchesClassSelector(def, classGroups) {
+  if (!Array.isArray(classGroups) || classGroups.length === 0) {
+    return false;
+  }
+
+  const classes = allUnitClasses(def);
+  return classGroups.some((group) =>
+    Array.isArray(group)
+      && group.every((value) => classes.some((entry) => entry.includes(String(value).toLowerCase())))
+  );
+}
+
+function unitMatchesSelector(def, select) {
+  if (!select || typeof select !== 'object') {
+    return false;
+  }
+
+  const idMatches = Array.isArray(select.id)
+    ? select.id.some((id) => String(id).toLowerCase() === String(def.id || '').toLowerCase())
+    : false;
+  const classMatches = unitMatchesClassSelector(def, select.class);
+
+  return idMatches || classMatches;
+}
+
+function applyArmorEffect(def, armorType, effect, value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount === 0) {
+    return;
+  }
+
+  if (effect === 'multiply') {
+    const found = (Array.isArray(def.armor) ? def.armor : []).find((entry) => entry.type === armorType);
+    if (found) {
+      found.value = roundStat(found.value * amount);
+    } else {
+      addArmor(def, armorType, 0);
+      const created = def.armor.find((entry) => entry.type === armorType);
+      if (created) {
+        created.value = roundStat(created.value * amount);
+      }
+    }
+    return;
+  }
+
+  addArmor(def, armorType, amount);
+}
+
+function applyAttackEffect(def, weaponMatcher, effect, value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount === 0) {
+    return;
+  }
+
+  for (const weapon of def.weapons) {
+    if (!weaponMatcher(weapon)) {
+      continue;
+    }
+    if (effect === 'multiply') {
+      weapon.damage = roundStat(weapon.damage * amount);
+    } else if (effect === 'change') {
+      weapon.damage = roundStat(weapon.damage + amount);
+    }
+  }
+}
+
+function applyAttackSpeedEffect(def, effect, value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount === 0) {
+    return;
+  }
+
+  for (const weapon of def.weapons) {
+    if (effect === 'multiply') {
+      weapon.speed = Math.max(0.2, roundStat(weapon.speed * amount));
+    } else if (effect === 'change') {
+      weapon.speed = Math.max(0.2, roundStat(weapon.speed + amount));
+    }
+  }
+}
+
+function applyMoveSpeedEffect(def, effect, value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount === 0) {
+    return;
+  }
+
+  const current = def.movement && typeof def.movement.speed === 'number' ? def.movement.speed : 1;
+  if (effect === 'multiply') {
+    def.movement.speed = roundStat(current * amount);
+  } else if (effect === 'change') {
+    def.movement.speed = roundStat(current + amount);
+  }
+}
+
+function applyHitpointsEffect(def, effect, value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount === 0) {
+    return;
+  }
+
+  if (effect === 'multiply') {
+    def.hitpoints = roundStat(def.hitpoints * amount);
+  } else if (effect === 'change') {
+    def.hitpoints = roundStat(def.hitpoints + amount);
+  }
+}
+
+function applyRangeEffect(def, effect, value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount === 0) {
+    return;
+  }
+
+  for (const weapon of def.weapons) {
+    if (!weapon.range || typeof weapon.range.max !== 'number') {
+      continue;
+    }
+    if (effect === 'multiply') {
+      weapon.range.max = roundStat(weapon.range.max * amount);
+    } else if (effect === 'change') {
+      weapon.range.max = roundStat(weapon.range.max + amount);
+    }
+  }
+}
+
+function applyRawEffectToUnit(def, rawEffect) {
+  if (!rawEffect || typeof rawEffect !== 'object') {
+    return;
+  }
+
+  const property = String(rawEffect.property || '');
+  const effect = String(rawEffect.effect || '').toLowerCase();
+  if (effect !== 'change' && effect !== 'multiply') {
+    return;
+  }
+
+  const value = rawEffect.value;
+  switch (property) {
+    case 'hitpoints':
+      applyHitpointsEffect(def, effect, value);
+      break;
+    case 'moveSpeed':
+    case 'movementSpeed':
+      applyMoveSpeedEffect(def, effect, value);
+      break;
+    case 'meleeArmor':
+      applyArmorEffect(def, 'melee', effect, value);
+      break;
+    case 'rangedArmor':
+      applyArmorEffect(def, 'ranged', effect, value);
+      break;
+    case 'meleeAttack':
+      applyAttackEffect(def, isMeleeWeapon, effect, value);
+      break;
+    case 'rangedAttack':
+      applyAttackEffect(def, isRangedWeapon, effect, value);
+      break;
+    case 'attack':
+      applyAttackEffect(def, () => true, effect, value);
+      break;
+    case 'attackSpeed':
+      applyAttackSpeedEffect(def, effect, value);
+      break;
+    case 'maxRange':
+      applyRangeEffect(def, effect, value);
+      break;
+    default:
+      break;
+  }
+}
+
+function applyCivilizationPassiveBonuses(def, civ) {
+  const civKey = String(civ || '').toLowerCase();
+
+  // HRE passive: infantry units move 10% faster.
+  if (civKey === 'hr' && unitIsInfantry(def)) {
+    const speed = def.movement && typeof def.movement.speed === 'number' ? def.movement.speed : 1;
+    def.movement.speed = roundStat(speed * 1.1);
+  }
+}
+
+function applyTechTreeToUnitDef(def, selectedTechs = [], context = {}) {
   if (!Array.isArray(selectedTechs) || selectedTechs.length === 0) {
-    return def;
+    const baseOnly = cloneUnitDef(def);
+    applyCivilizationPassiveBonuses(baseOnly, context.civ);
+
+    const rawTechs = Array.isArray(context.unitTechs) ? context.unitTechs : [];
+    for (const tech of rawTechs) {
+      const effects = Array.isArray(tech.effects) ? tech.effects : [];
+      for (const rawEffect of effects) {
+        if (!unitMatchesSelector(baseOnly, rawEffect.select)) {
+          continue;
+        }
+        applyRawEffectToUnit(baseOnly, rawEffect);
+      }
+    }
+
+    return baseOnly;
   }
 
   const next = cloneUnitDef(def);
@@ -133,6 +336,19 @@ function applyTechTreeToUnitDef(def, selectedTechs = []) {
       if (isRangedWeapon(weapon)) {
         weapon.speed = Math.max(0.2, weapon.speed * 0.85);
       }
+    }
+  }
+
+  applyCivilizationPassiveBonuses(next, context.civ);
+
+  const rawTechs = Array.isArray(context.unitTechs) ? context.unitTechs : [];
+  for (const tech of rawTechs) {
+    const effects = Array.isArray(tech.effects) ? tech.effects : [];
+    for (const rawEffect of effects) {
+      if (!unitMatchesSelector(next, rawEffect.select)) {
+        continue;
+      }
+      applyRawEffectToUnit(next, rawEffect);
     }
   }
 

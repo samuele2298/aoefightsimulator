@@ -5,8 +5,8 @@ const logger = require('../../logger');
 const SimUnit = require('./unit');
 const SimulationEngine = require('./engine');
 
-const { getUnitsRaw } = require('../data/loader');
-const { normalizeUnits } = require('../data/normalizer');
+const { getUnitsRaw, getTechnologiesRaw } = require('../data/loader');
+const { normalizeUnits, normalizeTechnologies } = require('../data/normalizer');
 const { buildLinePositions } = require('./formations/line');
 const { buildNormalPositions } = require('./formations/normal');
 const { createObstacleEnvironment } = require('./environment/obstaclePresets');
@@ -39,21 +39,37 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
   const pool = buildUnitPool({ civ: teamConfig.civ, age: teamConfig.age });
   const requested = Array.isArray(teamConfig.units) ? teamConfig.units : [];
   const selectedTechs = Array.isArray(teamConfig.techs) ? teamConfig.techs : [];
+  const defaultUnitTechIds = Array.isArray(teamConfig.unitTechs) ? teamConfig.unitTechs : [];
+  const availableTechs = normalizeTechnologies(getTechnologiesRaw(), {
+    civ: teamConfig.civ,
+    age: teamConfig.age,
+  });
+  const unitTechsById = new Map(availableTechs.map((tech) => [tech.id, tech]));
   const techCache = new Map();
 
-  const expandedDefs = [];
+  const expandedUnits = [];
   for (const item of requested) {
     const baseDef = pool.get(item.unitId);
     const requestedMode = item && (item.attackMode === 'melee' || item.attackMode === 'ranged')
       ? item.attackMode
       : null;
+    const selectedUnitTechIds = Array.isArray(item && item.unitTechs)
+      ? item.unitTechs
+      : defaultUnitTechIds;
+    const selectedUnitTechs = selectedUnitTechIds
+      .map((techId) => unitTechsById.get(techId))
+      .filter(Boolean);
     const allowModeOverride = String(item.unitId || '').toLowerCase() === 'desert-raider';
     const appliedMode = allowModeOverride ? requestedMode : null;
 
-    const cacheKey = `${item.unitId}::${selectedTechs.join('|')}::${appliedMode || 'default'}`;
+    const cacheKey = `${item.unitId}::${selectedTechs.join('|')}::${selectedUnitTechIds.join('|')}::${appliedMode || 'default'}`;
     let def = techCache.get(cacheKey);
     if (!def && baseDef) {
-      def = applyTechTreeToUnitDef(baseDef, selectedTechs);
+      def = applyTechTreeToUnitDef(baseDef, selectedTechs, {
+        civ: teamConfig.civ,
+        age: teamConfig.age,
+        unitTechs: selectedUnitTechs,
+      });
       if (appliedMode) {
         def = {
           ...def,
@@ -66,20 +82,25 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
       continue;
     }
 
+    const chargeEnabled = item && typeof item.chargeEnabled === 'boolean'
+      ? item.chargeEnabled
+      : true;
     const count = Math.max(1, parseInt(item.count || 0, 10));
     for (let i = 0; i < count; i += 1) {
-      expandedDefs.push(def);
+      expandedUnits.push({ def, chargeEnabled });
     }
   }
 
   // Default: ranged in back, melee in front. For kiting we invert to keep melee behind ranged.
   const isKiting = teamConfig && teamConfig.strategy && teamConfig.strategy.type === 'kiting';
-  expandedDefs.sort((a, b) => {
-    const aRanged = Array.isArray(a.weapons)
-      ? a.weapons.some((w) => w.type === 'ranged' && w.range && w.range.max > 1)
+  expandedUnits.sort((a, b) => {
+    const left = a.def;
+    const right = b.def;
+    const aRanged = Array.isArray(left.weapons)
+      ? left.weapons.some((w) => w.type === 'ranged' && w.range && w.range.max > 1)
       : false;
-    const bRanged = Array.isArray(b.weapons)
-      ? b.weapons.some((w) => w.type === 'ranged' && w.range && w.range.max > 1)
+    const bRanged = Array.isArray(right.weapons)
+      ? right.weapons.some((w) => w.type === 'ranged' && w.range && w.range.max > 1)
       : false;
 
     if (aRanged === bRanged) {
@@ -95,24 +116,25 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
   const positions = formation === 'line'
     ? buildLinePositions({
         team,
-        count: expandedDefs.length,
+        count: expandedUnits.length,
         mapWidth,
         mapHeight,
         startX: defaultStartX,
       })
     : buildNormalPositions({
         team,
-        count: expandedDefs.length,
+        count: expandedUnits.length,
         mapWidth,
         mapHeight,
         startX: defaultStartX,
       });
 
-  return expandedDefs.map((def, idx) =>
+  return expandedUnits.map((entry, idx) =>
     new SimUnit({
       id: `${team}-${idx + 1}`,
       team,
-      def,
+      def: entry.def,
+      chargeEnabled: entry.chargeEnabled,
       x: positions[idx] ? positions[idx].x : defaultStartX,
       y: positions[idx] ? positions[idx].y : mapHeight / 2,
     })

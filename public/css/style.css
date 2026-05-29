@@ -372,6 +372,21 @@ input[type='number'] {
   font-size: 0.8rem;
 }
 
+.unit-batch-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unit-batch-tech-btn {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  margin-top: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .civ-select-row {
   display: grid;
   grid-template-columns: 44px 1fr;
@@ -404,6 +419,34 @@ input[type='number'] {
 
 .unit-attack-mode-wrap.is-visible {
   display: block;
+}
+
+.unit-resource-summary {
+  border: 1px solid #355070;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(17, 28, 43, 0.95) 0%, rgba(11, 18, 29, 0.96) 100%);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.unit-resource-summary-title {
+  color: var(--muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.unit-resource-summary-total {
+  color: #f2f7ff;
+  font-weight: 700;
+  font-size: 0.98rem;
+  margin-top: 3px;
+}
+
+.unit-resource-summary-breakdown {
+  color: #afc2dd;
+  font-size: 0.82rem;
+  margin-top: 2px;
 }
 
 .focus-fire-toggle {
@@ -570,6 +613,20 @@ input[type='number'] {
 .tech-option-meta {
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.unit-tech-charge-wrap {
+  margin-bottom: 10px;
+}
+
+.tech-dialog .actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tech-dialog .actions .btn {
+  margin-top: 0;
 }
 
 .advanced-analytics-panel {

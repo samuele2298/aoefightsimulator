@@ -241,7 +241,10 @@ function buildAnalyticsModel({ snapshots, result, config, obstacles, batchStats 
       rows: [
         { key: 'Damage / 100 res spent', value: `A ${fmtNumber(damageEfficiencyA, 1)} | B ${fmtNumber(damageEfficiencyB, 1)}` },
         { key: 'Kill Efficiency (enemy loss/own loss)', value: `A ${fmtNumber(lossA > 0 ? lossB / lossA : 0, 2)} | B ${fmtNumber(lossB > 0 ? lossA / lossB : 0, 2)}` },
-        { key: 'Tech Count', value: `A ${(config.teamA && config.teamA.techs ? config.teamA.techs.length : 0)} | B ${(config.teamB && config.teamB.techs ? config.teamB.techs.length : 0)}` },
+        {
+          key: 'Tech Count',
+          value: `A ${(config.teamA && config.teamA.techs ? config.teamA.techs.length : 0) + ((config.teamA && Array.isArray(config.teamA.units)) ? config.teamA.units.reduce((sum, unit) => sum + (Array.isArray(unit.unitTechs) ? unit.unitTechs.length : 0), 0) : 0)} | B ${(config.teamB && config.teamB.techs ? config.teamB.techs.length : 0) + ((config.teamB && Array.isArray(config.teamB.units)) ? config.teamB.units.reduce((sum, unit) => sum + (Array.isArray(unit.unitTechs) ? unit.unitTechs.length : 0), 0) : 0)}`,
+        },
         { key: 'Top Loss Types A', value: lossesByTypeA },
         { key: 'Top Loss Types B', value: lossesByTypeB },
       ],

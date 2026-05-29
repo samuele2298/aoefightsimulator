@@ -114,6 +114,11 @@
                 <option value="melee">Melee</option>
               </select>
             </label>
+            <div id="teamA-resource-summary" class="unit-resource-summary" aria-live="polite">
+              <div class="unit-resource-summary-title">Costo esercito selezionato</div>
+              <div class="unit-resource-summary-total">Totale: 0</div>
+              <div class="unit-resource-summary-breakdown">Cibo 0 • Oro 0 • Legna 0</div>
+            </div>
             <ul id="teamA-unit-list" class="unit-list"></ul>
           </section>
         </aside>
@@ -182,6 +187,11 @@
                 <option value="melee">Melee</option>
               </select>
             </label>
+            <div id="teamB-resource-summary" class="unit-resource-summary" aria-live="polite">
+              <div class="unit-resource-summary-title">Costo esercito selezionato</div>
+              <div class="unit-resource-summary-total">Totale: 0</div>
+              <div class="unit-resource-summary-breakdown">Cibo 0 • Oro 0 • Legna 0</div>
+            </div>
             <ul id="teamB-unit-list" class="unit-list"></ul>
           </section>
         </aside>
@@ -201,9 +211,9 @@
 
       <section class="panel advanced-analytics-panel" id="advanced-analytics-panel">
         <h2>Advanced Fight Analytics</h2>
-        <p class="advanced-analytics-subtle">Statistiche di supporto per leggere impatto di unita, tech, formazione e ambiente.</p>
+        <p class="advanced-analytics-subtle">Statistics of support to read the impact of units, tech, formation, and environment.</p>
         <div id="advanced-analytics" class="advanced-analytics-grid">
-          <div class="analytics-empty">Avvia una simulazione per vedere il pannello completo.</div>
+          <div class="analytics-empty">Start a simulation to see the full panel.</div>
         </div>
       </section>
 
@@ -220,13 +230,13 @@
       <form method="dialog" class="tech-dialog-form">
         <h3>Team A Tech Tree</h3>
         <div class="tech-bulk-actions">
-          <button id="teamA-tech-clear" type="button" class="btn">Azzera tutte</button>
-          <button id="teamA-tech-select-all" type="button" class="btn">Seleziona tutte</button>
+          <button id="teamA-tech-clear" type="button" class="btn">Clear All</button>
+          <button id="teamA-tech-select-all" type="button" class="btn">Select All</button>
         </div>
         <div id="teamA-tech-options" class="tech-options"></div>
         <div class="actions">
-          <button class="btn" value="cancel">Annulla</button>
-          <button id="teamA-tech-apply" type="button" class="btn primary">Applica</button>
+          <button class="btn" value="cancel">Cancel</button>
+          <button id="teamA-tech-apply" type="button" class="btn primary">Apply</button>
         </div>
       </form>
     </dialog>
@@ -235,13 +245,37 @@
       <form method="dialog" class="tech-dialog-form">
         <h3>Team B Tech Tree</h3>
         <div class="tech-bulk-actions">
-          <button id="teamB-tech-clear" type="button" class="btn">Azzera tutte</button>
-          <button id="teamB-tech-select-all" type="button" class="btn">Seleziona tutte</button>
+          <button id="teamB-tech-clear" type="button" class="btn">Clear All</button>
+          <button id="teamB-tech-select-all" type="button" class="btn">Select All</button>
         </div>
         <div id="teamB-tech-options" class="tech-options"></div>
         <div class="actions">
-          <button class="btn" value="cancel">Annulla</button>
-          <button id="teamB-tech-apply" type="button" class="btn primary">Applica</button>
+          <button class="btn" value="cancel">Cancel</button>
+          <button id="teamB-tech-apply" type="button" class="btn primary">Apply</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="unit-tech-item-dialog" class="tech-dialog">
+      <form method="dialog" class="tech-dialog-form">
+        <h3 id="unit-tech-item-title">Unit Tech</h3>
+        <div id="unit-tech-item-charge-wrap" class="tech-option unit-tech-charge-wrap" hidden>
+          <label>
+            <input id="unit-tech-item-charge-active" type="checkbox" checked />
+            <div>
+              <div class="tech-option-title">Charge Active</div>
+              <div class="tech-option-meta">Check behavior of the unit, not a tech.</div>
+            </div>
+          </label>
+        </div>
+        <div class="tech-bulk-actions">
+          <button id="unit-tech-item-clear" type="button" class="btn">Clear All</button>
+          <button id="unit-tech-item-select-all" type="button" class="btn">Select All</button>
+        </div>
+        <div id="unit-tech-item-options" class="tech-options"></div>
+        <div class="actions">
+          <button class="btn" value="cancel">Cancel</button>
+          <button id="unit-tech-item-apply" type="button" class="btn primary">Apply</button>
         </div>
       </form>
     </dialog>
