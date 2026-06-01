@@ -4,7 +4,9 @@ const config = {
   port: process.env.PORT || '4000',
   nodeEnv: process.env.NODE_ENV || 'development',
   log_level: process.env.LOG_LEVEL || 'debug',
-  combatDebugLog: true,
+
+  // Enable detailed combat logs (damage breakdowns, class interactions, etc.) in the server console.
+  combatDebugLog: false, // Set to true to enable
 
   // Simulation
   tickDelta: 0.1,          // simulated seconds per tick
