@@ -204,7 +204,6 @@ h2 {
 }
 
 .insights-layout {
-  display: grid;
   grid-template-columns: minmax(420px, 1fr) minmax(320px, 0.85fr);
   gap: 14px;
 }
@@ -373,13 +372,48 @@ input[type='number'] {
   gap: 6px;
 }
 
-.unit-batch-tech-btn {
-  width: 36px;
-  min-width: 36px;
+.unit-batch-strat-btn,
+.unit-batch-tech-btn,
+.unit-batch-remove-btn {
+  width: 34px;
+  min-width: 34px;
   padding: 0;
   margin-top: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1;
+}
+
+.unit-batch-strat-btn {
+  background: rgba(74, 163, 255, 0.13);
+  border-color: rgba(74, 163, 255, 0.32);
+  color: #7dc5ff;
+}
+
+.unit-batch-strat-btn:hover {
+  background: rgba(74, 163, 255, 0.26);
+  border-color: #4aa3ff;
+}
+
+.unit-batch-tech-btn {
+  background: rgba(247, 213, 143, 0.12);
+  border-color: rgba(247, 213, 143, 0.30);
+  color: #f7d58f;
+}
+
+.unit-batch-tech-btn:hover {
+  background: rgba(247, 213, 143, 0.24);
+  border-color: #f7d58f;
+}
+
+.unit-batch-remove-btn {
+  background: rgba(229, 83, 83, 0.10);
+  border-color: rgba(229, 83, 83, 0.28);
+  color: #e57373;
+}
+
+.unit-batch-remove-btn:hover {
+  background: rgba(229, 83, 83, 0.22);
+  border-color: #e57373;
 }
 
 .civ-select-row {
@@ -405,6 +439,35 @@ input[type='number'] {
 
 .focus-target-wrap.is-visible {
   display: block;
+}
+
+.strat-dialog-body {
+  padding: 4px 0 8px;
+}
+
+.strat-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.strat-field > span {
+  min-width: 130px;
+  color: #cfd6e4;
+  font-size: 0.9rem;
+}
+
+.strat-field > select {
+  flex: 1;
+}
+
+.strat-focus-options {
+  padding-left: 14px;
+  border-left: 2px solid #2a3f5a;
+  margin-top: 2px;
+  margin-bottom: 10px;
 }
 
 .unit-attack-mode-wrap {

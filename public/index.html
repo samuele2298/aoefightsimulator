@@ -80,25 +80,10 @@
                 <option value="line">Linea</option>
               </select>
             </label>
-            <label>Strategia
-              <select id="teamA-strategy">
-                <option value="straight">Straight Fight</option>
-              </select>
-            </label>
             <div class="team-tech-row">
               <button id="teamA-tech-btn" type="button" class="btn">Tech Tree</button>
               <div id="teamA-tech-summary" class="tech-summary">Nessuna tech selezionata</div>
             </div>
-            <label class="focus-fire-toggle">
-              <input id="teamA-focus-enabled" type="checkbox" />
-              Focus Fire (modificatore)
-            </label>
-            <label id="teamA-focus-wrap" class="focus-target-wrap">Unit che fa Focus Fire (tuo team)
-              <select id="teamA-focus-source"></select>
-            </label>
-            <label id="teamA-focus-target-wrap" class="focus-target-wrap">Focus Target (enemy unit)
-              <select id="teamA-focus-target"></select>
-            </label>
             <div class="unit-picker">
               <div class="unit-select-row">
                 <img id="teamA-unit-icon" class="unit-icon" alt="Team A selected unit icon" />
@@ -153,25 +138,10 @@
                 <option value="line">Linea</option>
               </select>
             </label>
-            <label>Strategia
-              <select id="teamB-strategy">
-                <option value="straight">Straight Fight</option>
-              </select>
-            </label>
             <div class="team-tech-row">
               <button id="teamB-tech-btn" type="button" class="btn">Tech Tree</button>
               <div id="teamB-tech-summary" class="tech-summary">Nessuna tech selezionata</div>
             </div>
-            <label class="focus-fire-toggle">
-              <input id="teamB-focus-enabled" type="checkbox" />
-              Focus Fire (modificatore)
-            </label>
-            <label id="teamB-focus-wrap" class="focus-target-wrap">Unit che fa Focus Fire (tuo team)
-              <select id="teamB-focus-source"></select>
-            </label>
-            <label id="teamB-focus-target-wrap" class="focus-target-wrap">Focus Target (enemy unit)
-              <select id="teamB-focus-target"></select>
-            </label>
             <div class="unit-picker">
               <div class="unit-select-row">
                 <img id="teamB-unit-icon" class="unit-icon" alt="Team B selected unit icon" />
@@ -201,18 +171,12 @@
           <h2>Resource Value Over Time</h2>
           <canvas id="resource-chart" height="130"></canvas>
         </section>
-
-        <section class="panel result-wrap">
-          <h2>Result</h2>
-          <pre id="result">No result yet.</pre>
-        </section>
       </section>
 
       <section class="credits-showcase" aria-label="Credits">
         <div class="credits-content">
           <h3>Credits</h3>
           <p class="credits-name">Samuele Carpani</p>
-          <a class="credits-game" href="https://aoe4world.com/players/8739298-Sam" target="_blank" rel="noreferrer">Sam98</a>
           <a class="credits-email" href="mailto:samu.carpa@gmail.com">samu.carpa@gmail.com</a>
           <p class="credits-game-line">Name in game: <a class="credits-game" href="https://aoe4world.com/players/8739298-Sam" target="_blank" rel="noreferrer">Sam98</a></p>
         </div>
@@ -269,6 +233,45 @@
         <div class="actions">
           <button class="btn" value="cancel">Cancel</button>
           <button id="unit-tech-item-apply" type="button" class="btn primary">Apply</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="unit-strat-dialog" class="tech-dialog">
+      <form method="dialog" class="tech-dialog-form">
+        <h3 id="unit-strat-title">Unit Strategy</h3>
+        <div class="strat-dialog-body">
+          <label class="strat-field">
+            <span>Strategia</span>
+            <select id="unit-strat-type">
+              <!-- populated dynamically based on unit type -->
+            </select>
+          </label>
+          <!-- focus fire settings – shown for kiting and straightFocusFire only -->
+          <div id="unit-strat-focus-settings" class="strat-focus-options" hidden>
+            <label class="strat-field">
+              <span>Target unità (opzionale)</span>
+              <select id="unit-strat-focus-target"></select>
+            </label>
+            <label class="strat-field">
+              <span>Group Split</span>
+              <select id="unit-strat-group-split">
+                <option value="1">1 – Tutti su un target</option>
+                <option value="2">2 – Due gruppi</option>
+                <option value="3">3 – Tre gruppi</option>
+                <option value="4">4 – Quattro gruppi</option>
+                <option value="5">5 – Cinque gruppi</option>
+              </select>
+            </label>
+            <label class="strat-field">
+              <span>Riattacco (sec)</span>
+              <input id="unit-strat-reattack-time" type="number" min="0.5" max="30" step="0.1" value="0.5" />
+            </label>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="unit-strat-cancel" type="button" class="btn">Annulla</button>
+          <button id="unit-strat-apply" type="button" class="btn primary">Applica</button>
         </div>
       </form>
     </dialog>

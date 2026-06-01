@@ -254,12 +254,17 @@ export function createBattlefieldRenderer(canvas) {
     const meta = teamMeta[team] || { civAbbr: team, civName: `Team ${team}`, banner: '' };
     const banner = getImage(meta.banner);
     const rows = buildLegendRows(team);
-    const alive = rows.reduce((sum, row) => sum + row.count, 0);
+    const teamUnits = latestUnits.filter((unit) => unit.team === team);
+    const totalUnits = teamUnits.length;
+    const alive = teamUnits.filter((unit) => unit.hp > 0).length;
+    const aliveRatio = totalUnits > 0 ? alive / totalUnits : 0;
     const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0);
     const width = 392;
     const headerHeight = 50;
+    const progressBlockHeight = 30;
     const rowHeight = 34;
-    const height = headerHeight + 14 + rows.length * rowHeight;
+    const rowsStartY = y + headerHeight + progressBlockHeight + 18;
+    const height = rowsStartY + rows.length * rowHeight - y;
 
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.24)';
@@ -307,14 +312,51 @@ export function createBattlefieldRenderer(canvas) {
     ctx.font = '12px "Trebuchet MS", "Segoe UI", sans-serif';
     ctx.fillText(`Team ${team}  •  Alive ${alive}  •  Value ${totalCost}`, x + 68, y + 43);
 
+    const progressLabelY = y + headerHeight + 14;
+    ctx.fillStyle = '#cfd6e4';
+    ctx.font = '600 11px "Trebuchet MS", "Segoe UI", sans-serif';
+    ctx.fillText(
+      `Survivors ${alive}/${totalUnits || 0} (${Math.round(aliveRatio * 100)}%)`,
+      x + 14,
+      progressLabelY
+    );
+
+    const barX = x + 14;
+    const barY = progressLabelY + 6;
+    const barWidth = width - 28;
+    const barHeight = 10;
+    ctx.fillStyle = 'rgba(228, 233, 243, 0.16)';
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barWidth, barHeight, 999);
+      ctx.fill();
+    } else {
+      ctx.fillRect(barX, barY, barWidth, barHeight);
+    }
+
+    const fillWidth = Math.max(0, Math.min(barWidth, barWidth * aliveRatio));
+    if (fillWidth > 0) {
+      const fillGradient = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+      fillGradient.addColorStop(0, `${TEAM_COLORS[team]}aa`);
+      fillGradient.addColorStop(1, `${TEAM_COLORS[team]}ff`);
+      ctx.fillStyle = fillGradient;
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, fillWidth, barHeight, 999);
+        ctx.fill();
+      } else {
+        ctx.fillRect(barX, barY, fillWidth, barHeight);
+      }
+    }
+
     ctx.strokeStyle = 'rgba(228, 233, 243, 0.10)';
     ctx.beginPath();
-    ctx.moveTo(x + 14, y + headerHeight + 2);
-    ctx.lineTo(x + width - 14, y + headerHeight + 2);
+    ctx.moveTo(x + 14, y + headerHeight + progressBlockHeight + 2);
+    ctx.lineTo(x + width - 14, y + headerHeight + progressBlockHeight + 2);
     ctx.stroke();
 
     rows.forEach((row, idx) => {
-      const lineY = y + headerHeight + 22 + idx * rowHeight;
+      const lineY = rowsStartY + idx * rowHeight;
       const icon = getIcon(row.iconKey);
       if (icon && icon.complete) {
         ctx.drawImage(icon, x + 14, lineY - 17, 24, 24);

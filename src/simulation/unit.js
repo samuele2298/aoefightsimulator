@@ -5,7 +5,7 @@ const HORSEMAN_CHARGE_MULTIPLIER = 1.35;
 const ROYAL_KNIGHT_CHARGE_FLAT_BONUS = 3;
 
 class SimUnit {
-  constructor({ id, team, def, x, y, chargeEnabled = true }) {
+  constructor({ id, team, def, x, y, chargeEnabled = true, strategy = null }) {
     this.id = id;
     this.team = team;
     this.def = def;
@@ -26,6 +26,11 @@ class SimUnit {
     this.chargeReady = this.canUseCharge();
     this.chargeApproachActive = false;
     this.royalKnightChargeBonusTicks = 0;
+
+    this.strategy = strategy || { type: 'straight' };
+    this.kitingPhase = 'approach';
+    this.attackAnimEndTick = 0;
+    this.reattackReadyTick = 0;
   }
 
   get speed() {

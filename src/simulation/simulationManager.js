@@ -100,14 +100,14 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
     const chargeEnabled = item && typeof item.chargeEnabled === 'boolean'
       ? item.chargeEnabled
       : true;
+    const itemStrategy = (item && item.strategy) || { type: 'straight' };
     const count = Math.max(1, parseInt(item.count || 0, 10));
     for (let i = 0; i < count; i += 1) {
-      expandedUnits.push({ def, chargeEnabled });
+      expandedUnits.push({ def, chargeEnabled, strategy: itemStrategy });
     }
   }
 
-  // Default: ranged in back, melee in front. For kiting we invert to keep melee behind ranged.
-  const isKiting = teamConfig && teamConfig.strategy && teamConfig.strategy.type === 'kiting';
+  // Default: ranged in back, melee in front.
   expandedUnits.sort((a, b) => {
     const left = a.def;
     const right = b.def;
@@ -120,9 +120,6 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
 
     if (aRanged === bRanged) {
       return 0;
-    }
-    if (isKiting) {
-      return aRanged ? 1 : -1;
     }
     return aRanged ? -1 : 1;
   });
@@ -154,6 +151,7 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
       team,
       def: entry.def,
       chargeEnabled: entry.chargeEnabled,
+      strategy: entry.strategy || { type: 'straight' },
       x: clamp(baseX + jitter.dx, 0, mapWidth),
       y: clamp(baseY + jitter.dy, 0, mapHeight),
     });
@@ -176,13 +174,6 @@ function createEnvironmentWithSeed(environmentType, seed) {
 function buildSimulationFromConfig(simConfig, hooks = {}) {
   const teamA = simConfig.teamA || {};
   const teamB = simConfig.teamB || {};
-  const normalizeStrategy = (strategy) => {
-    const type = strategy && strategy.type === 'kiting' ? 'straight' : (strategy && strategy.type) || 'straight';
-    return {
-      ...strategy,
-      type,
-    };
-  };
 
   const unitsA = createUnitsForTeam('A', teamA, config.mapWidth, config.mapHeight, config.teamASpawnX);
   const unitsB = createUnitsForTeam('B', teamB, config.mapWidth, config.mapHeight, config.teamBSpawnX);
@@ -197,8 +188,6 @@ function buildSimulationFromConfig(simConfig, hooks = {}) {
     unitsA,
     unitsB,
     environment,
-    strategyA: normalizeStrategy(teamA.strategy || { type: 'straight' }),
-    strategyB: normalizeStrategy(teamB.strategy || { type: 'straight' }),
     onTick: hooks.onTick,
     onEnd: hooks.onEnd,
   });

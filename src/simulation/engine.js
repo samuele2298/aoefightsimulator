@@ -9,12 +9,12 @@ const {
   avoidObstacles,
 } = require('./battlefield');
 const { selectTarget: selectStraight } = require('./strategies/straightFight');
-const { selectTarget: selectFocusFire, selectPriorityUnitInRange } = require('./strategies/focusFire');
-const { computeRetreatPoint } = require('./strategies/kiting');
 
 const DEFLECTIVE_ARMOR_RECHARGE_TICKS = Math.round(15 / config.tickDelta);
 const ROYAL_KNIGHT_CHARGE_BONUS_TICKS = Math.round(5 / config.tickDelta);
 const LANDSKNECHT_SPLASH_RADIUS = 0.75;
+const DEFAULT_ATTACK_ANIM_SECS = 0.15;
+const MIN_REATTACK_SECS = 0.5;
 
 function weaponRange(unit) {
   const weapon = unit.primaryWeapon;
@@ -24,13 +24,188 @@ function weaponRange(unit) {
   return typeof weapon.range.max === 'number' ? weapon.range.max : 1;
 }
 
+/** Time (seconds) the unit stands frozen during an attack animation.
+ * Uses weapon.speed (full attack cycle: aim+fire+reload) so the freeze
+ * is always clearly visible. Falls back to DEFAULT when data is absent.
+ */
+function getAttackAnimDuration(unit) {
+  const weapon = unit.primaryWeapon;
+  if (weapon && typeof weapon.speed === 'number' && weapon.speed > 0) {
+    return weapon.speed;
+  }
+  return DEFAULT_ATTACK_ANIM_SECS;
+}
+
+function normalizeFocusFire(focusFire) {
+  const parsedGroupSplit = parseInt((focusFire && focusFire.groupSplit) || 1, 10);
+  const parsedReattack = parseFloat(focusFire && focusFire.reattackTime);
+  return {
+    targetUnitId: (focusFire && focusFire.targetUnitId) || null,
+    groupSplit: Math.max(1, Number.isFinite(parsedGroupSplit) ? parsedGroupSplit : 1),
+    reattackTime: Number.isFinite(parsedReattack)
+      ? Math.max(MIN_REATTACK_SECS, parsedReattack)
+      : MIN_REATTACK_SECS,
+  };
+}
+
+function focusStrategySignature(strategy, normalizedFocus = null) {
+  const stratType = (strategy && strategy.type) || 'straight';
+  const ff = normalizedFocus || normalizeFocusFire(strategy && strategy.focusFire);
+  return `${stratType}|${ff.targetUnitId || '*'}|${ff.groupSplit}|${ff.reattackTime}`;
+}
+
+function sameFocusStrategy(left, right) {
+  return focusStrategySignature(left) === focusStrategySignature(right);
+}
+
+function buildFocusGroupContext(unit, allies, unitStrategy, normalizedFocus = null) {
+  const ff = normalizedFocus || normalizeFocusFire(unitStrategy && unitStrategy.focusFire);
+  const cohort = allies.filter((ally) => {
+    if (ally.dead || !ally.def || ally.def.id !== unit.def.id) {
+      return false;
+    }
+    return sameFocusStrategy(ally.strategy || { type: 'straight' }, unitStrategy || { type: 'straight' });
+  });
+
+  if (!cohort.length) {
+    const fallbackSignature = focusStrategySignature(unitStrategy || { type: 'straight' }, ff);
+    return {
+      cohort: [unit],
+      members: [unit],
+      groupSplit: ff.groupSplit,
+      groupIndex: 0,
+      groupKey: `${unit.team}|${unit.def.id}|${fallbackSignature}|0`,
+    };
+  }
+
+  cohort.sort((a, b) => a.y - b.y);
+  const rank = cohort.findIndex((ally) => ally.id === unit.id);
+  const effectiveRank = rank >= 0 ? rank : 0;
+  const groupSize = Math.ceil(Math.max(1, cohort.length) / ff.groupSplit);
+  const groupIndex = Math.floor(effectiveRank / Math.max(1, groupSize));
+  const start = groupIndex * groupSize;
+  const members = cohort.slice(start, start + groupSize);
+  const signature = focusStrategySignature(unitStrategy || { type: 'straight' }, ff);
+
+  return {
+    cohort,
+    members: members.length ? members : [unit],
+    groupSplit: ff.groupSplit,
+    groupIndex,
+    groupKey: `${unit.team}|${unit.def.id}|${signature}|${groupIndex}`,
+  };
+}
+
+/**
+ * Select target for a focus-fire strategy (kiting or straightFocusFire).
+ * Prefers the specified targetUnitId if any, falls back to any alive enemy.
+ * Group split divides same-type allies by Y into N groups, each group targets
+ * a different Y-sorted enemy.
+ */
+function selectTargetFocusFire(unit, enemies, focusFire, allies, groupContext = null, preferredLaneY = null) {
+  const aliveEnemies = enemies.filter((e) => !e.dead);
+  if (!aliveEnemies.length) {
+    return null;
+  }
+
+  const normalizedFocus = normalizeFocusFire(focusFire);
+  const targetUnitId = normalizedFocus.targetUnitId;
+  const groupSplit = normalizedFocus.groupSplit;
+
+  const preferred = targetUnitId
+    ? aliveEnemies.filter((e) => e.def && e.def.id === targetUnitId)
+    : aliveEnemies;
+  const pool = preferred.length ? preferred : aliveEnemies;
+
+  const pickClosestToPoint = (candidates, point) => {
+    if (!candidates.length) {
+      return null;
+    }
+    let best = candidates[0];
+    let bestDist = distance(point, best);
+    for (let i = 1; i < candidates.length; i += 1) {
+      const candidate = candidates[i];
+      const d = distance(point, candidate);
+      if (d < bestDist) {
+        best = candidate;
+        bestDist = d;
+      }
+    }
+    return best;
+  };
+
+  // Group split: divide own units of same type by Y, each group targets different Y-sorted enemy
+  const sameTypeAllies = groupContext
+    ? [...groupContext.cohort]
+    : allies.filter((a) => !a.dead && a.def && a.def.id === unit.def.id);
+  const allySet = groupContext
+    ? [...groupContext.members]
+    : (sameTypeAllies.length ? sameTypeAllies : [unit]);
+
+  if (groupSplit <= 1) {
+    // One shared focus target for the whole platoon.
+    // Keep a stable lane anchor when available so groups do not drift upward/downward over time.
+    const center = allySet.reduce(
+      (acc, ally) => ({ x: acc.x + ally.x, y: acc.y + ally.y }),
+      { x: 0, y: 0 }
+    );
+    center.x /= allySet.length;
+    center.y /= allySet.length;
+    const laneY = typeof preferredLaneY === 'number' ? preferredLaneY : center.y;
+    const sortedByLane = [...pool].sort((a, b) => {
+      const laneDiffA = Math.abs(a.y - laneY);
+      const laneDiffB = Math.abs(b.y - laneY);
+      if (laneDiffA !== laneDiffB) {
+        return laneDiffA - laneDiffB;
+      }
+      const forwardDiffA = Math.abs(a.x - center.x);
+      const forwardDiffB = Math.abs(b.x - center.x);
+      return forwardDiffA - forwardDiffB;
+    });
+    return sortedByLane[0] || pickClosestToPoint(pool, center);
+  }
+
+  let groupIndex = 0;
+  if (groupContext) {
+    groupIndex = groupContext.groupIndex;
+  } else {
+    sameTypeAllies.sort((a, b) => a.y - b.y);
+    const rank = sameTypeAllies.findIndex((a) => a.id === unit.id);
+    const effectiveRank = rank >= 0 ? rank : 0;
+    const groupSize = Math.ceil(Math.max(1, sameTypeAllies.length) / groupSplit);
+    groupIndex = Math.floor(effectiveRank / Math.max(1, groupSize));
+  }
+
+  const sortedPool = [...pool].sort((a, b) => a.y - b.y);
+  const preferredByIndex = sortedPool[groupIndex % sortedPool.length];
+  if (!preferredByIndex) {
+    return pool[0] || null;
+  }
+
+  // Keep each split group in its own lane whenever possible.
+  const laneY = typeof preferredLaneY === 'number' ? preferredLaneY : preferredByIndex.y;
+  const bandSize = Math.ceil(Math.max(1, sortedPool.length) / groupSplit);
+  const bandStart = groupIndex * bandSize;
+  const band = sortedPool.slice(bandStart, bandStart + bandSize);
+  const source = band.length ? band : sortedPool;
+  const sortedByLane = [...source].sort((a, b) => {
+    const laneDiffA = Math.abs(a.y - laneY);
+    const laneDiffB = Math.abs(b.y - laneY);
+    if (laneDiffA !== laneDiffB) {
+      return laneDiffA - laneDiffB;
+    }
+    const forwardDiffA = Math.abs(a.x - unit.x);
+    const forwardDiffB = Math.abs(b.x - unit.x);
+    return forwardDiffA - forwardDiffB;
+  });
+  return sortedByLane[0] || preferredByIndex;
+}
+
 class SimulationEngine {
-  constructor({ unitsA, unitsB, environment, strategyA, strategyB, onTick, onEnd }) {
+  constructor({ unitsA, unitsB, environment, onTick, onEnd }) {
     this.unitsA = unitsA;
     this.unitsB = unitsB;
     this.environment = environment || { obstacles: [], buildingAttackers: [] };
-    this.strategyA = strategyA || { type: 'straight' };
-    this.strategyB = strategyB || { type: 'straight' };
     this.onTick = onTick;
     this.onEnd = onEnd;
 
@@ -41,14 +216,7 @@ class SimulationEngine {
     this.result = null;
 
     this.lastSnapshots = [];
-    this.initialRangedByTeam = {
-      A: this.unitsA.filter((u) => u.isRanged()).length,
-      B: this.unitsB.filter((u) => u.isRanged()).length,
-    };
-    this.kitingActivatedByTeam = {
-      A: false,
-      B: false,
-    };
+    this.focusGroupStates = new Map();
   }
 
   allUnits() {
@@ -98,230 +266,220 @@ class SimulationEngine {
     );
   }
 
-  selectTargetForUnit(unit, enemies, teamStrategy) {
-    if (!enemies.length) {
-      return null;
-    }
+  fireAttack(unit, target, enemies) {
+    unit.registerCombat(this.tick);
+    target.registerCombat(this.tick);
 
-    const focus = teamStrategy.focusFire || {};
-    const isFocusEnabled = Boolean(focus.enabled) && unit.isRanged();
-
-    if (isFocusEnabled) {
-      const inRangeEnemies = enemies.filter((enemy) => !enemy.dead && distance(unit, enemy) <= weaponRange(unit));
-      const prioritized = selectFocusFire(unit, inRangeEnemies, {
-        priorityUnitId: focus.targetUnitId || null,
-      });
-      if (prioritized) {
-        return prioritized;
+    let chargeMultiplier = 1;
+    if (unit.chargeApproachActive && unit.consumeCharge) {
+      const consumedCharge = unit.consumeCharge(this.tick, ROYAL_KNIGHT_CHARGE_BONUS_TICKS);
+      if (consumedCharge) {
+        chargeMultiplier = unit.getChargeMultiplier ? unit.getChargeMultiplier() : 1;
       }
     }
 
-    return selectStraight(unit, enemies);
-  }
+    const blocked = target.consumeDeflectiveArmor(this.tick);
 
-  shouldMeleeRetreatForKiting(team) {
-    const initial = this.initialRangedByTeam[team] || 0;
-    if (initial <= 0) {
-      return false;
-    }
-    const aliveRanged = this.aliveRangedUnits(team).length;
-    return aliveRanged > Math.max(1, Math.floor(initial * 0.05));
-  }
+    if (!blocked) {
+      const damage = calculateDamage(unit, target, {
+        enemyUnits: enemies,
+        chargeMultiplier,
+      });
+      target.applyDamage(damage);
 
-  getRangedAnchor(team) {
-    const ranged = this.aliveRangedUnits(team);
-    if (!ranged.length) {
-      return null;
-    }
-
-    const xValues = ranged.map((u) => u.x);
-    const avgY = ranged.reduce((sum, u) => sum + u.y, 0) / ranged.length;
-
-    return {
-      x: team === 'A' ? Math.min(...xValues) : Math.max(...xValues),
-      y: avgY,
-    };
-  }
-
-  getFrontlineX(team) {
-    const melee = this.aliveMeleeUnits(team);
-    if (!melee.length) {
-      return null;
-    }
-
-    const values = melee.map((u) => u.x);
-    return team === 'A' ? Math.max(...values) : Math.min(...values);
-  }
-
-  isRangedAheadOfFrontline(unit) {
-    const frontX = this.getFrontlineX(unit.team);
-    if (frontX === null) {
-      return false;
-    }
-
-    const maxLead = 0.55;
-    if (unit.team === 'A') {
-      return unit.x > frontX + maxLead;
-    }
-    return unit.x < frontX - maxLead;
-  }
-
-  updateUnit(unit, allies, enemies, teamStrategy) {
-    if (unit.dead) {
-      return;
-    }
-
-    const range = weaponRange(unit);
-    let strategyForUnit = teamStrategy || { type: 'straight' };
-
-    const kitingIsActive = teamStrategy.type === 'kiting' && this.kitingActivatedByTeam[unit.team];
-
-    if (teamStrategy.type === 'kiting' && !kitingIsActive) {
-      strategyForUnit = { type: 'straight' };
-    }
-
-    if (kitingIsActive && !unit.isRanged()) {
-      if (this.shouldMeleeRetreatForKiting(unit.team)) {
-        const anchor = this.getRangedAnchor(unit.team);
-        if (anchor) {
-          unit.state = 'MOVING';
-          unit.targetId = null;
-          const offset = unit.team === 'A' ? -1.8 : 1.8;
-          this.moveToPoint(
-            unit,
-            {
-              x: anchor.x + offset,
-              y: anchor.y,
-            },
-            allies
-          );
-          unit.attackCooldown = Math.max(0, unit.attackCooldown - config.tickDelta);
-          return;
+      if (unit.hasClass && unit.hasClass('landsknecht') && unit.primaryWeapon && unit.primaryWeapon.type === 'melee') {
+        for (const enemy of enemies) {
+          if (enemy.dead || enemy.id === target.id) {
+            continue;
+          }
+          if (distance(target, enemy) <= LANDSKNECHT_SPLASH_RADIUS) {
+            enemy.applyDamage(damage);
+            enemy.registerCombat(this.tick);
+          }
         }
       }
-      strategyForUnit = { type: 'straight' };
     }
 
-    const focus = teamStrategy.focusFire || {};
-    const kitingFocusActiveForUnit = Boolean(focus.enabled)
-      && unit.isRanged()
-      && (!focus.sourceUnitId || unit.def.id === focus.sourceUnitId);
+    const weapon = unit.primaryWeapon;
+    return weapon && typeof weapon.speed === 'number' ? weapon.speed : 1;
+  }
 
-    if (kitingIsActive && kitingFocusActiveForUnit && this.isRangedAheadOfFrontline(unit)) {
-      const frontX = this.getFrontlineX(unit.team);
-      const fallback = unit.team === 'A' ? frontX - 0.5 : frontX + 0.5;
+  getFocusGroupState(groupKey) {
+    let state = this.focusGroupStates.get(groupKey);
+    if (!state) {
+      state = {
+        phase: 'approach',
+        phaseUntilTick: 0,
+        volleyTick: -1,
+        targetId: null,
+        lastAdvancedTick: -1,
+        laneY: null,
+      };
+      this.focusGroupStates.set(groupKey, state);
+    }
+    return state;
+  }
+
+  updateUnitFocusFireGrouped(unit, allies, enemies, unitStrategy, mode) {
+    const focusFire = normalizeFocusFire(unitStrategy.focusFire || {});
+    const groupContext = buildFocusGroupContext(unit, allies, unitStrategy, focusFire);
+    const groupState = this.getFocusGroupState(groupContext.groupKey);
+
+    if (typeof groupState.laneY !== 'number') {
+      const members = groupContext.members.length ? groupContext.members : [unit];
+      groupState.laneY = members.reduce((sum, member) => sum + member.y, 0) / members.length;
+    }
+
+    if (groupState.lastAdvancedTick !== this.tick) {
+      if (groupState.phase === 'firing' && this.tick >= groupState.phaseUntilTick) {
+        groupState.phase = mode === 'kiting' ? 'retreat' : 'waiting';
+        groupState.phaseUntilTick = this.tick + Math.ceil(focusFire.reattackTime / config.tickDelta);
+      } else if ((groupState.phase === 'retreat' || groupState.phase === 'waiting') && this.tick >= groupState.phaseUntilTick) {
+        groupState.phase = 'approach';
+        groupState.phaseUntilTick = 0;
+      }
+      groupState.lastAdvancedTick = this.tick;
+    }
+
+    let target = null;
+    if (groupState.targetId) {
+      target = enemies.find((enemy) => !enemy.dead && enemy.id === groupState.targetId) || null;
+    }
+    if (!target) {
+      target = selectTargetFocusFire(unit, enemies, focusFire, allies, groupContext, groupState.laneY);
+      groupState.targetId = target ? target.id : null;
+    }
+
+    if (!target) {
       unit.state = 'MOVING';
       unit.targetId = null;
-      this.moveToPoint(
-        unit,
-        {
-          x: fallback,
-          y: unit.y,
-        },
-        allies
-      );
-      unit.attackCooldown = Math.max(0, unit.attackCooldown - config.tickDelta);
+      this.moveForwardAclick(unit, allies);
       return;
     }
 
-    const target = this.selectTargetForUnit(unit, enemies, strategyForUnit);
+    unit.targetId = target.id;
+    const dist = distance(unit, target);
+    const range = weaponRange(unit);
+
+    if (groupState.phase === 'firing') {
+      unit.state = 'ATTACKING';
+      if (groupState.volleyTick === this.tick && unit.lastGroupVolleyTick !== groupState.volleyTick) {
+        if (dist <= range) {
+          this.fireAttack(unit, target, enemies);
+        }
+        unit.lastGroupVolleyTick = groupState.volleyTick;
+      }
+      return;
+    }
+
+    if (groupState.phase === 'retreat') {
+      const retreatDir = unit.team === 'A' ? -1 : 1;
+      unit.state = 'MOVING';
+      this.moveToPoint(unit, { x: unit.x + retreatDir * 10, y: unit.y }, allies);
+      return;
+    }
+
+    if (groupState.phase === 'waiting') {
+      unit.state = 'IDLE';
+      return;
+    }
+
+    // Approach phase: if one member reaches range, whole group starts a shared volley timer.
+    if (dist > range) {
+      unit.state = 'MOVING';
+      this.moveToPoint(unit, target, allies);
+      return;
+    }
+
+    if (groupState.volleyTick !== this.tick) {
+      const animDuration = getAttackAnimDuration(unit);
+      groupState.phase = 'firing';
+      groupState.phaseUntilTick = this.tick + Math.max(1, Math.ceil(animDuration / config.tickDelta));
+      groupState.volleyTick = this.tick;
+    }
+
+    unit.state = 'ATTACKING';
+    if (unit.lastGroupVolleyTick !== groupState.volleyTick) {
+      if (dist <= range) {
+        this.fireAttack(unit, target, enemies);
+      }
+      unit.lastGroupVolleyTick = groupState.volleyTick;
+    }
+  }
+
+  /**
+   * Straight Fight – pure a-click.
+   * Move toward nearest enemy, attack when in range with normal cooldown. No stop-to-fire.
+   */
+  updateUnitStraight(unit, allies, enemies) {
+    const range = weaponRange(unit);
+    const target = selectStraight(unit, enemies);
 
     if (!target) {
       unit.chargeApproachActive = false;
-      if (strategyForUnit.type === 'straight') {
-        unit.state = 'MOVING';
-        unit.targetId = null;
-        this.moveForwardAclick(unit, allies);
-      } else {
-        unit.state = 'IDLE';
-        unit.targetId = null;
-      }
+      unit.state = 'MOVING';
+      unit.targetId = null;
+      this.moveForwardAclick(unit, allies);
       return;
     }
 
-    const focusConfig = strategyForUnit.focusFire || {};
-    const focusActiveForUnit = Boolean(focusConfig.enabled) && unit.isRanged();
-
-    let attackTarget = target;
-    if (focusActiveForUnit) {
-      const focused = selectPriorityUnitInRange(unit, enemies, focusConfig.targetUnitId || null, range);
-      if (focused) {
-        attackTarget = focused;
-      }
-    }
-
-    unit.targetId = attackTarget.id;
-    const dist = distance(unit, attackTarget);
-
-    const canKite = strategyForUnit.type === 'kiting' && unit.isRanged();
+    unit.targetId = target.id;
+    const dist = distance(unit, target);
 
     if (dist > range) {
       if (unit.canUseCharge && unit.canUseCharge() && unit.chargeReady) {
         unit.chargeApproachActive = true;
       }
       unit.state = 'MOVING';
-      this.moveToPoint(unit, attackTarget, allies);
+      this.moveToPoint(unit, target, allies);
     } else {
-      if (canKite && unit.attackCooldown > 0) {
-        const retreat = computeRetreatPoint(unit, attackTarget, Math.max(0.7, range * 0.3));
-        this.moveToPoint(unit, retreat, allies);
-        unit.state = 'MOVING';
-      } else {
-        unit.state = 'ATTACKING';
-      }
+      unit.state = 'ATTACKING';
+      unit.chargeApproachActive = false;
     }
 
     unit.attackCooldown = Math.max(0, unit.attackCooldown - config.tickDelta);
 
-    if (distance(unit, attackTarget) <= range && unit.attackCooldown <= 0 && unit.state === 'ATTACKING') {
-      unit.registerCombat(this.tick);
-      attackTarget.registerCombat(this.tick);
-
-      let chargeMultiplier = 1;
-      if (unit.chargeApproachActive && unit.consumeCharge) {
-        const consumedCharge = unit.consumeCharge(this.tick, ROYAL_KNIGHT_CHARGE_BONUS_TICKS);
-        if (consumedCharge) {
-          chargeMultiplier = unit.getChargeMultiplier ? unit.getChargeMultiplier() : 1;
-        }
-      }
-
-      const blocked = attackTarget.consumeDeflectiveArmor(this.tick);
-
-      if (!blocked) {
-        const damage = calculateDamage(unit, attackTarget, {
-          enemyUnits: enemies,
-          chargeMultiplier,
-        });
-        attackTarget.applyDamage(damage);
-
-        if (unit.hasClass && unit.hasClass('landsknecht') && unit.primaryWeapon && unit.primaryWeapon.type === 'melee') {
-          for (const enemy of enemies) {
-            if (enemy.dead || enemy.id === attackTarget.id) {
-              continue;
-            }
-
-            const splashDistance = distance(attackTarget, enemy);
-            if (splashDistance <= LANDSKNECHT_SPLASH_RADIUS) {
-              enemy.applyDamage(damage);
-              enemy.registerCombat(this.tick);
-            }
-          }
-        }
-
-        if (teamStrategy.type === 'kiting' && !this.kitingActivatedByTeam[unit.team]) {
-          this.kitingActivatedByTeam[unit.team] = true;
-        }
-      }
-
-      const weapon = unit.primaryWeapon;
-      const attackRate = weapon && typeof weapon.speed === 'number' ? weapon.speed : 1;
+    if (dist <= range && unit.attackCooldown <= 0 && unit.state === 'ATTACKING') {
+      const attackRate = this.fireAttack(unit, target, enemies);
       unit.attackCooldown = Math.max(0.2, attackRate);
+    }
+  }
 
-      if (canKite && !attackTarget.dead) {
-        const retreat = computeRetreatPoint(unit, attackTarget, Math.max(0.8, range * 0.8));
-        unit.state = 'MOVING';
-        this.moveToPoint(unit, retreat, allies);
-      }
+  /**
+   * Kiting – ranged only.
+   * Phase 'approach': move toward focus-fire target until in range.
+   * In range: STOP, fire, enter 'firing' phase (frozen for attack animation duration).
+   * When animation ends: enter 'retreat' phase, move toward own spawn for reattackTime seconds.
+   * When retreat ends: return to 'approach'.
+   */
+  updateUnitKiting(unit, allies, enemies, unitStrategy) {
+    this.updateUnitFocusFireGrouped(unit, allies, enemies, unitStrategy, 'kiting');
+  }
+
+  /**
+   * Straight Focus Fire – ranged only.
+   * Find focus-fire target and approach it. When in range: STOP, fire, freeze for
+   * attack animation, then wait reattackTime in place, then repeat.
+   */
+  updateUnitStraightFocusFire(unit, allies, enemies, unitStrategy) {
+    this.updateUnitFocusFireGrouped(unit, allies, enemies, unitStrategy, 'straightFocusFire');
+  }
+
+  updateUnit(unit, allies, enemies) {
+    if (unit.dead) {
+      return;
+    }
+
+    const unitStrategy = unit.strategy || { type: 'straight' };
+    const stratType = unitStrategy.type;
+
+    // Ranged-only strategies fall back to straight if unit is not actually ranged
+    if (stratType === 'kiting' && unit.isRanged()) {
+      this.updateUnitKiting(unit, allies, enemies, unitStrategy);
+    } else if (stratType === 'straightFocusFire' && unit.isRanged()) {
+      this.updateUnitStraightFocusFire(unit, allies, enemies, unitStrategy);
+    } else {
+      this.updateUnitStraight(unit, allies, enemies);
     }
   }
 
@@ -408,11 +566,11 @@ class SimulationEngine {
     const aliveB = this.aliveUnits('B');
 
     for (const unit of aliveA) {
-      this.updateUnit(unit, aliveA, aliveB, this.strategyA);
+      this.updateUnit(unit, aliveA, aliveB);
     }
 
     for (const unit of aliveB) {
-      this.updateUnit(unit, aliveB, aliveA, this.strategyB);
+      this.updateUnit(unit, aliveB, aliveA);
     }
 
     this.updateBuildingAttackers();

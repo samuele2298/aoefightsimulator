@@ -28,6 +28,7 @@ const state = {
     B: new Map(),
   },
   activeUnitTechDialog: null,
+  activeUnitStratDialog: null,
   civByAbbr: {},
 };
 
@@ -307,6 +308,29 @@ const templates = [
       ],
     },
   },
+  {
+    id: 't6',
+    label: '6) Test kiting: EN longbow age2 vs FR archer age2',
+    environment: 'dry-arabia',
+    teamA: {
+      civHint: 'english',
+      age: 2,
+      formation: 'normal',
+      strategy: 'kiting',
+      units: [
+        { count: 1, preferredIds: ['longbowman'], keywords: ['longbow'] },
+      ],
+    },
+    teamB: {
+      civHint: 'french',
+      age: 2,
+      formation: 'normal',
+      strategy: 'straight',
+      units: [
+        { count: 1, preferredIds: ['archer'], keywords: ['archer'] },
+      ],
+    },
+  },
 ];
 
 function byId(id) {
@@ -319,12 +343,6 @@ function teamElements(team) {
     civIcon: byId(`team${team}-civ-icon`),
     age: byId(`team${team}-age`),
     formation: byId(`team${team}-formation`),
-    strategy: byId(`team${team}-strategy`),
-    focusEnabled: byId(`team${team}-focus-enabled`),
-    focusWrap: byId(`team${team}-focus-wrap`),
-    focusTargetWrap: byId(`team${team}-focus-target-wrap`),
-    focusSource: byId(`team${team}-focus-source`),
-    focusTarget: byId(`team${team}-focus-target`),
     techButton: byId(`team${team}-tech-btn`),
     techSummary: byId(`team${team}-tech-summary`),
     techDialog: byId(`team${team}-tech-dialog`),
@@ -851,6 +869,157 @@ function bindUnitTechDialogHandlers() {
   });
 }
 
+function openUnitStratDialogForItem(team, item, unitDef) {
+  const dialog = byId('unit-strat-dialog');
+  if (!dialog) {
+    return;
+  }
+
+  const isRanged = unitDef ? unitIsRanged(unitDef) : false;
+  const current = item.strategy || {};
+  const ff = current.focusFire || {};
+
+  state.activeUnitStratDialog = { team, item, unitDef, isRanged };
+
+  // Populate title
+  const titleEl = byId('unit-strat-title');
+  if (titleEl) {
+    titleEl.textContent = `${item.name} – Strategia`;
+  }
+
+  // Populate strategy type options (ranged gets extra choices)
+  const typeSelect = byId('unit-strat-type');
+  if (typeSelect) {
+    typeSelect.innerHTML = '';
+    const options = [
+      { value: 'straight', label: 'Straight Fight' },
+      ...(isRanged ? [
+        { value: 'kiting', label: 'Kiting (Focus Fire)' },
+        { value: 'straightFocusFire', label: 'Straight Focus Fire' },
+      ] : []),
+    ];
+    for (const opt of options) {
+      const el = document.createElement('option');
+      el.value = opt.value;
+      el.textContent = opt.label;
+      typeSelect.appendChild(el);
+    }
+    // If current type is ranged-only but unit is now melee, fall back
+    const validType = isRanged ? (current.type || 'straight') : 'straight';
+    typeSelect.value = validType;
+  }
+
+  // Populate focus fire target options
+  const focusTarget = byId('unit-strat-focus-target');
+  if (focusTarget) {
+    focusTarget.innerHTML = '';
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = 'Auto (prima che trova)';
+    focusTarget.appendChild(emptyOpt);
+    const enemyTeam = team === 'A' ? 'B' : 'A';
+    const seen = new Map();
+    for (const u of (state.selectedUnits[enemyTeam] || [])) {
+      if (!seen.has(u.unitId)) {
+        seen.set(u.unitId, u.name);
+        const opt = document.createElement('option');
+        opt.value = u.unitId;
+        opt.textContent = u.name;
+        focusTarget.appendChild(opt);
+      }
+    }
+    focusTarget.value = ff.targetUnitId || '';
+  }
+
+  // Populate group split
+  const groupSplit = byId('unit-strat-group-split');
+  if (groupSplit) {
+    groupSplit.value = String(Math.max(1, parseInt(ff.groupSplit || 1, 10)));
+  }
+
+  // Populate reattack time
+  const reattackTimeEl = byId('unit-strat-reattack-time');
+  if (reattackTimeEl) {
+    const parsed = parseFloat(ff.reattackTime);
+    const safeValue = Number.isFinite(parsed) ? Math.max(0.5, parsed) : 0.5;
+    reattackTimeEl.value = String(safeValue);
+  }
+
+  // Show/hide focus settings based on current strategy type
+  const currentType = typeSelect ? typeSelect.value : 'straight';
+  const focusSettings = byId('unit-strat-focus-settings');
+  if (focusSettings) {
+    focusSettings.hidden = currentType === 'straight';
+  }
+
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+  }
+}
+
+function bindUnitStratDialogHandlers() {
+  const dialog = byId('unit-strat-dialog');
+  if (!dialog) {
+    return;
+  }
+
+  const typeSelect = byId('unit-strat-type');
+  const focusSettings = byId('unit-strat-focus-settings');
+  const cancelBtn = byId('unit-strat-cancel');
+  const applyBtn = byId('unit-strat-apply');
+
+  // Show/hide focus fire settings when strategy type changes
+  if (typeSelect) {
+    typeSelect.addEventListener('change', () => {
+      if (focusSettings) {
+        focusSettings.hidden = typeSelect.value === 'straight';
+      }
+    });
+  }
+
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      if (!state.activeUnitStratDialog) {
+        return;
+      }
+      const ctx = state.activeUnitStratDialog;
+      const typeEl = byId('unit-strat-type');
+      const focusTargetEl = byId('unit-strat-focus-target');
+      const groupSplitEl = byId('unit-strat-group-split');
+      const reattackTimeEl = byId('unit-strat-reattack-time');
+
+      const stratType = typeEl ? typeEl.value : 'straight';
+      const hasFocusFire = stratType !== 'straight';
+
+      ctx.item.strategy = {
+        type: stratType,
+        ...(hasFocusFire ? {
+          focusFire: {
+            targetUnitId: (focusTargetEl && focusTargetEl.value) || null,
+            groupSplit: Math.max(1, Math.min(5, parseInt((groupSplitEl && groupSplitEl.value) || '1', 10))),
+            reattackTime: Math.max(0.5, parseFloat((reattackTimeEl && reattackTimeEl.value) || '0.5')),
+          },
+        } : {}),
+      };
+
+      const { team } = ctx;
+      dialog.close();
+      state.activeUnitStratDialog = null;
+      renderUnitList(team);
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      dialog.close('cancel');
+    });
+  }
+
+  dialog.addEventListener('close', () => {
+    state.activeUnitStratDialog = null;
+  });
+}
+
 function fillSelect(select, options, valueKey, labelKey) {
   select.innerHTML = '';
   for (const option of options) {
@@ -1175,12 +1344,25 @@ function renderUnitList(team) {
       : [];
     const techSuffix = techOptions.length ? ` • tech ${selectedTechIds.length}/${techOptions.length}` : '';
     const chargeSuffix = supportsChargeToggle && item.chargeEnabled === false ? ' • charge off' : '';
-    count.textContent = `x${item.count} • ${batchResourceTotal} res${techSuffix}${chargeSuffix}`;
+    const stratType = item.strategy && item.strategy.type ? item.strategy.type : 'straight';
+    const stratLabel = stratType === 'kiting' ? 'kiting' : stratType === 'straightFocusFire' ? 'focus fire' : '';
+    const stratSuffix = stratLabel ? ` • ${stratLabel}` : '';
+    count.textContent = `x${item.count} • ${batchResourceTotal} res${techSuffix}${chargeSuffix}${stratSuffix}`;
     meta.appendChild(title);
     meta.appendChild(count);
 
     const actions = document.createElement('div');
     actions.className = 'unit-batch-actions';
+
+    const stratBtn = document.createElement('button');
+    stratBtn.type = 'button';
+    stratBtn.className = 'btn unit-batch-strat-btn';
+    stratBtn.textContent = '⚔';
+    stratBtn.title = 'Strategia unita';
+    stratBtn.addEventListener('click', () => {
+      openUnitStratDialogForItem(team, item, unitDef);
+    });
+    actions.appendChild(stratBtn);
 
     if ((techOptions.length || supportsChargeToggle) && unitDef) {
       const techBtn = document.createElement('button');
@@ -1194,13 +1376,12 @@ function renderUnitList(team) {
       actions.appendChild(techBtn);
     }
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = 'remove';
-    btn.className = 'btn';
-    btn.style.width = 'auto';
-    btn.style.marginTop = '0';
-    btn.addEventListener('click', () => {
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.textContent = '✕';
+    removeBtn.className = 'btn unit-batch-remove-btn';
+    removeBtn.title = 'Rimuovi unita';
+    removeBtn.addEventListener('click', () => {
       const removeKey = item.selectionKey || `${item.unitId}::default`;
       removeSelectedUnitTechsForItem(team, item);
       state.selectedUnits[team] = state.selectedUnits[team].filter((u) => {
@@ -1208,10 +1389,8 @@ function renderUnitList(team) {
         return key !== removeKey;
       });
       renderUnitList(team);
-      refreshAllFocusTargetOptions();
     });
-
-    actions.appendChild(btn);
+    actions.appendChild(removeBtn);
 
     li.appendChild(icon);
     li.appendChild(meta);
@@ -1220,104 +1399,11 @@ function renderUnitList(team) {
   }
 }
 
-function refreshFocusTargetOptions(team) {
-  const el = teamElements(team);
-  const enemy = otherTeam(team);
-  const enemyUnits = state.selectedUnits[enemy];
-  const options = new Map();
-
-  for (const item of enemyUnits) {
-    if (!options.has(item.unitId)) {
-      options.set(item.unitId, { ...item });
-      continue;
-    }
-    const current = options.get(item.unitId);
-    current.count += item.count;
-  }
-
-  const current = el.focusTarget.value;
-  el.focusTarget.innerHTML = '';
-
-  const empty = document.createElement('option');
-  empty.value = '';
-  empty.textContent = 'Auto target';
-  el.focusTarget.appendChild(empty);
-
-  for (const item of options.values()) {
-    const option = document.createElement('option');
-    option.value = item.unitId;
-    option.textContent = `${item.name} (${item.count})`;
-    el.focusTarget.appendChild(option);
-  }
-
-  if ([...el.focusTarget.options].some((option) => option.value === current)) {
-    el.focusTarget.value = current;
-  }
-}
-
-function refreshFocusSourceOptions(team) {
-  const el = teamElements(team);
-  const ownUnits = state.selectedUnits[team];
-  const defsById = new Map(state.unitsByTeam[team].map((u) => [u.id, u]));
-
-  const current = el.focusSource.value;
-  el.focusSource.innerHTML = '';
-
-  const empty = document.createElement('option');
-  empty.value = '';
-  empty.textContent = 'Tutti i ranged';
-  el.focusSource.appendChild(empty);
-
-  const options = new Map();
-  for (const item of ownUnits) {
-    const def = defsById.get(item.unitId);
-    if (!def || !unitIsRanged(def)) {
-      continue;
-    }
-    if (!options.has(item.unitId)) {
-      options.set(item.unitId, { ...item });
-      continue;
-    }
-    const current = options.get(item.unitId);
-    current.count += item.count;
-  }
-
-  for (const item of options.values()) {
-    const option = document.createElement('option');
-    option.value = item.unitId;
-    option.textContent = `${item.name} (${item.count})`;
-    el.focusSource.appendChild(option);
-  }
-
-  if ([...el.focusSource.options].some((option) => option.value === current)) {
-    el.focusSource.value = current;
-  }
-}
-
 function refreshAllFocusTargetOptions() {
-  refreshFocusSourceOptions('A');
-  refreshFocusSourceOptions('B');
-  refreshFocusTargetOptions('A');
-  refreshFocusTargetOptions('B');
+  // Focus fire targets are now per-unit, populated when the strat dialog opens.
 }
 
-function refreshStrategyControls(team) {
-  const el = teamElements(team);
-  const hasRanged = teamHasRangedCapability(team);
 
-  if (el.strategy.value === 'kiting') {
-    el.strategy.value = 'straight';
-  }
-
-  if (!hasRanged) {
-    el.focusEnabled.checked = false;
-  }
-  el.focusEnabled.disabled = !hasRanged;
-
-  const showFocus = hasRanged && el.focusEnabled.checked;
-  el.focusWrap.classList.toggle('is-visible', showFocus);
-  el.focusTargetWrap.classList.toggle('is-visible', showFocus);
-}
 
 async function loadUnitsForTeam(team, { resetSelected = false, resetTechSelection = false } = {}) {
   const el = teamElements(team);
@@ -1351,7 +1437,6 @@ async function loadUnitsForTeam(team, { resetSelected = false, resetTechSelectio
   renderUnitList(team);
   refreshUnitAttackModeControl(team);
   updateCivIcon(team);
-  refreshStrategyControls(team);
   refreshAllFocusTargetOptions();
 }
 
@@ -1362,8 +1447,6 @@ async function applyTeamTemplate(team, templateTeam) {
   el.civ.value = civAbbr;
   el.age.value = String(templateTeam.age || 2);
   el.formation.value = templateTeam.formation || 'normal';
-  el.strategy.value = templateTeam.strategy || 'straight';
-  el.focusEnabled.checked = false;
   state.selectedTechs[team] = [];
   selectedUnitTechMap(team).clear();
 
@@ -1371,6 +1454,8 @@ async function applyTeamTemplate(team, templateTeam) {
 
   const units = state.unitsByTeam[team];
   state.selectedUnits[team] = [];
+
+  const defaultStratType = templateTeam.strategy || 'straight';
 
   for (const spec of templateTeam.units || []) {
     const found = resolveUnitFromSpec(units, spec);
@@ -1382,11 +1467,11 @@ async function applyTeamTemplate(team, templateTeam) {
       name: found.name,
       count: spec.count || 1,
       chargeEnabled: true,
+      strategy: { type: defaultStratType },
     });
   }
 
   renderUnitList(team);
-  refreshStrategyControls(team);
   refreshAllFocusTargetOptions();
   updateTechSummary(team);
 }
@@ -1446,17 +1531,9 @@ function attachTeamHandlers(team) {
     updateTechSummary(team);
   });
 
-  el.strategy.addEventListener('change', () => {
-    refreshStrategyControls(team);
-  });
-
   el.unitSelect.addEventListener('change', () => {
     refreshUnitAttackModeControl(team);
     updateUnitSelectIcon(team);
-  });
-
-  el.focusEnabled.addEventListener('change', () => {
-    refreshStrategyControls(team);
   });
 
   const addButton = document.querySelector(`.add-unit[data-team="${team}"]`);
@@ -1487,6 +1564,7 @@ function attachTeamHandlers(team) {
         attackMode,
         selectionKey,
         chargeEnabled: true,
+        strategy: { type: 'straight' },
       };
       state.selectedUnits[team].push(created);
 
@@ -1497,39 +1575,33 @@ function attachTeamHandlers(team) {
 
     renderUnitList(team);
     refreshAllFocusTargetOptions();
-    refreshStrategyControls(team);
   });
 }
 
 function readTeamConfig(team) {
   const el = teamElements(team);
-  const strategyType = el.strategy.value === 'kiting' ? 'straight' : el.strategy.value;
 
   return {
     civ: el.civ.value,
     age: parseInt(el.age.value, 10),
     formation: el.formation.value,
-    strategy: {
-      type: strategyType,
-      focusFire: {
-        enabled: Boolean(el.focusEnabled.checked),
-        sourceUnitId: el.focusSource.value || null,
-        targetUnitId: el.focusTarget.value || null,
-      },
-    },
     techs: [...state.selectedTechs[team]],
-    units: state.selectedUnits[team].map((u) => ({
-      unitId: u.unitId,
-      count: u.count,
-      attackMode: u.attackMode || null,
-      chargeEnabled: u.chargeEnabled !== false,
-      unitTechs: getSelectedUnitTechIdsForItem(
-        team,
-        u,
-        resolveUnitTechOptionsForUnit(team, state.unitsByTeam[team].find((unit) => unit.id === u.unitId) || u),
-        { autoInit: true }
-      ),
-    })),
+    units: state.selectedUnits[team].map((u) => {
+      const def = state.unitsByTeam[team].find((unit) => unit.id === u.unitId);
+      return {
+        unitId: u.unitId,
+        count: u.count,
+        attackMode: u.attackMode || null,
+        chargeEnabled: u.chargeEnabled !== false,
+        strategy: u.strategy || { type: 'straight' },
+        unitTechs: getSelectedUnitTechIdsForItem(
+          team,
+          u,
+          resolveUnitTechOptionsForUnit(team, def || u),
+          { autoInit: true }
+        ),
+      };
+    }),
   };
 }
 
@@ -1559,8 +1631,6 @@ function applyDefaultPreset() {
   renderUnitList('A');
   renderUnitList('B');
   refreshAllFocusTargetOptions();
-  refreshStrategyControls('A');
-  refreshStrategyControls('B');
   updateTechSummary('A');
   updateTechSummary('B');
 }
@@ -1600,6 +1670,7 @@ export async function initUi() {
   b.civ.value = 'fr';
 
   bindUnitTechDialogHandlers();
+  bindUnitStratDialogHandlers();
   attachTeamHandlers('A');
   attachTeamHandlers('B');
 
