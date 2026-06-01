@@ -16,6 +16,21 @@ let currentEngine = null;
 let lastResult = null;
 let wsBroadcaster = null;
 
+const SPAWN_JITTER_RADIUS = 0.25;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function randomSpawnJitter(radius = SPAWN_JITTER_RADIUS) {
+  const angle = Math.random() * Math.PI * 2;
+  const distance = Math.random() * radius;
+  return {
+    dx: Math.cos(angle) * distance,
+    dy: Math.sin(angle) * distance,
+  };
+}
+
 function setBroadcaster(fn) {
   wsBroadcaster = fn;
 }
@@ -129,16 +144,20 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
         startX: defaultStartX,
       });
 
-  return expandedUnits.map((entry, idx) =>
-    new SimUnit({
+  return expandedUnits.map((entry, idx) => {
+    const baseX = positions[idx] ? positions[idx].x : defaultStartX;
+    const baseY = positions[idx] ? positions[idx].y : mapHeight / 2;
+    const jitter = randomSpawnJitter();
+
+    return new SimUnit({
       id: `${team}-${idx + 1}`,
       team,
       def: entry.def,
       chargeEnabled: entry.chargeEnabled,
-      x: positions[idx] ? positions[idx].x : defaultStartX,
-      y: positions[idx] ? positions[idx].y : mapHeight / 2,
-    })
-  );
+      x: clamp(baseX + jitter.dx, 0, mapWidth),
+      y: clamp(baseY + jitter.dy, 0, mapHeight),
+    });
+  });
 }
 
 function createEnvironmentWithSeed(environmentType, seed) {

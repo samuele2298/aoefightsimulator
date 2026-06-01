@@ -1,4 +1,14 @@
 export function createResourceChart(canvas) {
+  const SIM_SECONDS_PER_TICK = 0.1;
+
+  function formatTickLabel(tick) {
+    if (tick === null || tick === undefined || Number.isNaN(Number(tick))) {
+      return 'n.d.';
+    }
+
+    return `${(Number(tick) * SIM_SECONDS_PER_TICK).toFixed(1)} s`;
+  }
+
   const chart = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: {
@@ -30,6 +40,11 @@ export function createResourceChart(canvas) {
       maintainAspectRatio: false,
       scales: {
         x: {
+          title: {
+            display: true,
+            text: 'Time (s)',
+            color: '#f1ebde',
+          },
           ticks: { color: '#cabfa8', maxTicksLimit: 10 },
           grid: { color: 'rgba(200, 168, 75, 0.2)' },
         },
@@ -54,7 +69,7 @@ export function createResourceChart(canvas) {
   }
 
   function pushPoint(tick, resources) {
-    chart.data.labels.push(tick);
+    chart.data.labels.push(formatTickLabel(tick));
     chart.data.datasets[0].data.push(resources.A || 0);
     chart.data.datasets[1].data.push(resources.B || 0);
 
@@ -69,7 +84,7 @@ export function createResourceChart(canvas) {
 
   function renderPlayback(snapshots, upToIndex) {
     const safeSnapshots = Array.isArray(snapshots) ? snapshots.slice(0, upToIndex + 1) : [];
-    chart.data.labels = safeSnapshots.map((snapshot) => snapshot.tick || 0);
+    chart.data.labels = safeSnapshots.map((snapshot) => formatTickLabel(snapshot.tick || 0));
     chart.data.datasets[0].data = safeSnapshots.map((snapshot) => snapshot.resources && snapshot.resources.A ? snapshot.resources.A : 0);
     chart.data.datasets[1].data = safeSnapshots.map((snapshot) => snapshot.resources && snapshot.resources.B ? snapshot.resources.B : 0);
     chart.update('none');

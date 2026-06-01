@@ -7,6 +7,8 @@ const UNIT_STATE_HIGHLIGHTS = {
   charge: '#ffd84a',
 };
 
+const DEFAULT_ZOOM = 2.5;
+
 export function createBattlefieldRenderer(canvas) {
   const ctx = canvas.getContext('2d');
   const iconCache = new Map();
@@ -20,7 +22,7 @@ export function createBattlefieldRenderer(canvas) {
     B: { civAbbr: 'B', civName: 'Team B', banner: '' },
   };
   let animationId = null;
-  let zoom = 1;
+  let zoom = DEFAULT_ZOOM;
   let cameraX = mapSize.width / 2;
   let cameraY = mapSize.height / 2;
   let dragState = null;
@@ -254,74 +256,124 @@ export function createBattlefieldRenderer(canvas) {
     const rows = buildLegendRows(team);
     const alive = rows.reduce((sum, row) => sum + row.count, 0);
     const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0);
-    const width = 360;
-    const headerHeight = 44;
-    const rowHeight = 30;
+    const width = 392;
+    const headerHeight = 50;
+    const rowHeight = 34;
     const height = headerHeight + 14 + rows.length * rowHeight;
 
     ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = 'rgba(12, 14, 20, 0.9)';
-    ctx.strokeStyle = `${TEAM_COLORS[team]}d0`;
-    ctx.lineWidth = 1.2;
-    ctx.fillRect(x, y, width, height);
-    ctx.strokeRect(x, y, width, height);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.24)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 5;
+    const panelGradient = ctx.createLinearGradient(x, y, x, y + height);
+    panelGradient.addColorStop(0, 'rgba(15, 22, 34, 0.60)');
+    panelGradient.addColorStop(1, 'rgba(11, 16, 25, 0.34)');
+    ctx.fillStyle = panelGradient;
+    ctx.strokeStyle = `${TEAM_COLORS[team]}88`;
+    ctx.lineWidth = 1.1;
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x, y, width, height, 16);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeRect(x, y, width, height);
+    }
     ctx.restore();
 
-    ctx.fillStyle = `${TEAM_COLORS[team]}2f`;
-    ctx.fillRect(x, y, width, headerHeight);
+    ctx.save();
+    ctx.fillStyle = `${TEAM_COLORS[team]}24`;
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x + 1, y + 1, width - 2, headerHeight - 1, 16);
+      ctx.fill();
+    } else {
+      ctx.fillRect(x, y, width, headerHeight);
+    }
+    ctx.restore();
 
     if (banner && banner.complete) {
-      ctx.drawImage(banner, x + 10, y + 9, 44, 26);
+      ctx.drawImage(banner, x + 12, y + 11, 48, 28);
     } else {
       ctx.fillStyle = `${TEAM_COLORS[team]}80`;
-      ctx.fillRect(x + 10, y + 9, 44, 26);
+      ctx.fillRect(x + 12, y + 11, 48, 28);
     }
 
     ctx.fillStyle = '#f8fafc';
-    ctx.font = '600 14px "Trebuchet MS", "Segoe UI", sans-serif';
-    ctx.fillText(`${meta.civName} (${meta.civAbbr.toUpperCase()})`, x + 62, y + 24);
+    ctx.font = '700 15px "Trebuchet MS", "Segoe UI", sans-serif';
+    ctx.fillText(`${meta.civName} (${meta.civAbbr.toUpperCase()})`, x + 68, y + 27);
     ctx.fillStyle = '#cfd6e4';
     ctx.font = '12px "Trebuchet MS", "Segoe UI", sans-serif';
-    ctx.fillText(`Team ${team} | Alive ${alive} | Value ${totalCost}`, x + 62, y + 39);
+    ctx.fillText(`Team ${team}  •  Alive ${alive}  •  Value ${totalCost}`, x + 68, y + 43);
 
-    ctx.strokeStyle = 'rgba(228, 233, 243, 0.18)';
+    ctx.strokeStyle = 'rgba(228, 233, 243, 0.10)';
     ctx.beginPath();
-    ctx.moveTo(x + 10, y + headerHeight + 2);
-    ctx.lineTo(x + width - 10, y + headerHeight + 2);
+    ctx.moveTo(x + 14, y + headerHeight + 2);
+    ctx.lineTo(x + width - 14, y + headerHeight + 2);
     ctx.stroke();
 
     rows.forEach((row, idx) => {
-      const lineY = y + headerHeight + 20 + idx * rowHeight;
+      const lineY = y + headerHeight + 22 + idx * rowHeight;
       const icon = getIcon(row.iconKey);
       if (icon && icon.complete) {
-        ctx.drawImage(icon, x + 12, lineY - 16, 22, 22);
+        ctx.drawImage(icon, x + 14, lineY - 17, 24, 24);
       } else {
         ctx.fillStyle = TEAM_COLORS[team];
         ctx.beginPath();
-        ctx.arc(x + 23, lineY - 6, 6, 0, Math.PI * 2);
+        ctx.arc(x + 26, lineY - 5, 6, 0, Math.PI * 2);
         ctx.fill();
       }
 
       ctx.fillStyle = '#edf2fb';
       ctx.font = '600 14px "Trebuchet MS", "Segoe UI", sans-serif';
-      ctx.fillText(row.name, x + 42, lineY - 1);
+      ctx.fillText(row.name, x + 46, lineY - 1);
       ctx.fillStyle = '#f7d58f';
       ctx.font = '13px "Trebuchet MS", "Segoe UI", sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(`x${row.count}   ${row.totalCost}`, x + width - 12, lineY - 1);
+      ctx.fillText(`x${row.count}   ${row.totalCost}`, x + width - 14, lineY - 1);
       ctx.textAlign = 'left';
 
       if (idx < rows.length - 1) {
-        ctx.strokeStyle = 'rgba(228, 233, 243, 0.12)';
+        ctx.strokeStyle = 'rgba(228, 233, 243, 0.08)';
         ctx.beginPath();
-        ctx.moveTo(x + 12, lineY + 8);
-        ctx.lineTo(x + width - 12, lineY + 8);
+        ctx.moveTo(x + 14, lineY + 10);
+        ctx.lineTo(x + width - 14, lineY + 10);
         ctx.stroke();
       }
     });
+  }
+
+  function drawZoomBadge() {
+    const label = `Zoom x${zoom.toFixed(2)}`;
+    ctx.save();
+    ctx.font = '600 12px "Trebuchet MS", "Segoe UI", sans-serif';
+    const textWidth = ctx.measureText(label).width;
+    const boxWidth = textWidth + 26;
+    const boxHeight = 28;
+    const x = canvas.width / 2 - boxWidth / 2;
+    const y = canvas.height - boxHeight - 14;
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.28)';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = 'rgba(12, 14, 20, 0.88)';
+    ctx.strokeStyle = 'rgba(247, 222, 171, 0.7)';
+    ctx.lineWidth = 1;
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x, y, boxWidth, boxHeight, 999);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      ctx.fillRect(x, y, boxWidth, boxHeight);
+      ctx.strokeRect(x, y, boxWidth, boxHeight);
+    }
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#f8fafc';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + 13, y + boxHeight / 2 + 0.5);
+    ctx.restore();
   }
 
   function renderFrame() {
@@ -335,6 +387,7 @@ export function createBattlefieldRenderer(canvas) {
 
     drawLegendBlock('A', 10, 10);
     drawLegendBlock('B', canvas.width - 370, 10);
+    drawZoomBadge();
 
     animationId = requestAnimationFrame(renderFrame);
   }
@@ -352,7 +405,7 @@ export function createBattlefieldRenderer(canvas) {
   }
 
   function setZoom(value) {
-    zoom = clamp(Number(value) || 1, 0.6, 7.5);
+    zoom = clamp(Number(value) || DEFAULT_ZOOM, 0.6, 7.5);
     updateCursor();
   }
 
@@ -377,7 +430,7 @@ export function createBattlefieldRenderer(canvas) {
   }
 
   function resetView() {
-    zoom = 1;
+    zoom = DEFAULT_ZOOM;
     cameraX = mapSize.width / 2;
     cameraY = mapSize.height / 2;
     updateCursor();

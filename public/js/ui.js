@@ -1568,6 +1568,14 @@ function applyDefaultPreset() {
 function initTemplateSelector() {
   const select = byId('template-select');
   select.innerHTML = '';
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = 'Seleziona template';
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
   for (const item of templates) {
     const option = document.createElement('option');
     option.value = item.id;
@@ -1603,9 +1611,11 @@ export async function initUi() {
   initTemplateSelector();
   applyDefaultPreset();
 
-  byId('load-template-btn').addEventListener('click', async () => {
-    const selectedTemplate = byId('template-select').value;
-    await applyTemplate(selectedTemplate);
+  byId('template-select').addEventListener('change', async (event) => {
+    const selectedTemplate = event.target.value;
+    if (selectedTemplate) {
+      await applyTemplate(selectedTemplate);
+    }
   });
 
   return {

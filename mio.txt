@@ -1,8 +1,12 @@
 FEAT:
+	- da rivedere stats ... non utili..
+	- feat dato un esercito e l altro -> equal cost e equal number
+
+	- tech di alcune landkmark specificeh non presneti (MAA OTD mainwrok )
 
 FIX:
 
-	- feat dato un esercito e l altro -> equal cost e equal number
+
 
 
 ---

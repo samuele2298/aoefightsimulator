@@ -319,11 +319,10 @@ class SimulationEngine {
 
       if (canKite && !attackTarget.dead) {
         const retreat = computeRetreatPoint(unit, attackTarget, Math.max(0.8, range * 0.8));
+        unit.state = 'MOVING';
         this.moveToPoint(unit, retreat, allies);
       }
     }
-
-    this.postMove(unit, allies);
   }
 
   updateBuildingAttackers() {

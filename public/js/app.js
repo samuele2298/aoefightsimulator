@@ -2,6 +2,9 @@ import { initUi } from './ui.js';
 import { createResourceChart } from './charts.js';
 import { createBattlefieldRenderer } from './battlefield2d.js';
 
+const SIM_SECONDS_PER_TICK = 0.1;
+const INITIAL_BATTLEFIELD_ZOOM = 2.5;
+
 function mean(values) {
   if (!values.length) {
     return 0;
@@ -47,6 +50,28 @@ function fmtNumber(value, digits = 2) {
 
 function fmtPct(value) {
   return `${fmtNumber(value, 1)}%`;
+}
+
+function formatSimSeconds(ticks) {
+  if (ticks === null || ticks === undefined || Number.isNaN(Number(ticks))) {
+    return 'n.d.';
+  }
+
+  return `${fmtNumber(Number(ticks) * SIM_SECONDS_PER_TICK, 1)} s`;
+}
+
+function buildResultDisplay(resultPayload) {
+  if (!resultPayload || typeof resultPayload !== 'object') {
+    return resultPayload;
+  }
+
+  const display = { ...resultPayload };
+  if (typeof display.tick === 'number') {
+    display.timeSeconds = Number((display.tick * SIM_SECONDS_PER_TICK).toFixed(1));
+    delete display.tick;
+  }
+
+  return display;
 }
 
 function countAlive(units, team) {
@@ -233,7 +258,7 @@ function buildAnalyticsModel({ snapshots, result, config, obstacles, batchStats 
         { key: 'Trade Ratio A/B', value: finalB > 0 ? fmtNumber(finalA / finalB, 3) : 'inf' },
         { key: 'Resource Swing', value: fmtNumber(finalA - finalB, 2) },
         { key: 'Survivor Count', value: `A ${countAlive(last.units || [], 'A')} | B ${countAlive(last.units || [], 'B')}` },
-        { key: 'Fight Duration (tick)', value: String(result && result.tick ? result.tick : last.tick || 0) },
+        { key: 'Fight Duration (s)', value: formatSimSeconds(typeof result.tick === 'number' ? result.tick : last.tick || 0) },
       ],
     },
     {
@@ -255,10 +280,10 @@ function buildAnalyticsModel({ snapshots, result, config, obstacles, batchStats 
     {
       title: 'Formation & Environment',
       rows: [
-        { key: 'Time to First Contact', value: contactTick === null ? 'n.d.' : `${contactTick} tick` },
+        { key: 'Time to First Contact', value: formatSimSeconds(contactTick) },
         { key: 'Ranged Uptime %', value: `A ${fmtPct(tempoA.rangedUptimePct)} | B ${fmtPct(tempoB.rangedUptimePct)}` },
         { key: 'Pathing Friction %', value: `A ${fmtPct(tempoA.pathingFrictionPct)} | B ${fmtPct(tempoB.pathingFrictionPct)}` },
-        { key: 'Frontline Break Tick', value: `A ${breakA === null ? 'none' : breakA} | B ${breakB === null ? 'none' : breakB}` },
+        { key: 'Frontline Break Time', value: `A ${formatSimSeconds(breakA)} | B ${formatSimSeconds(breakB)}` },
         { key: 'Formation Spread W/D', value: `A ${fmtNumber(spreadA.width, 2)}/${fmtNumber(spreadA.depth, 2)} | B ${fmtNumber(spreadB.width, 2)}/${fmtNumber(spreadB.depth, 2)}` },
         { key: 'Obstacle Pressure', value: `${(obstacles || []).length} obs | ${fmtPct(obstaclePressurePct)}` },
       ],
@@ -356,7 +381,7 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
     battlefield.setUnits(snapshot.units || []);
     chart.renderPlayback(replay.snapshots, index);
     ui.setPlaybackInfo(
-      `Frame ${index + 1}/${replay.snapshots.length} | Tick ${snapshot.tick || 0} | Speed x${replay.speed}`
+      `Frame ${index + 1}/${replay.snapshots.length} | Time ${formatSimSeconds(snapshot.tick || 0)} | Speed x${replay.speed}`
     );
   }
 
@@ -410,7 +435,7 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
       if (replay.recording) {
         const n = replay.snapshots.length;
         if (n % 20 === 0 || n <= 3) {
-          ui.setPlaybackInfo(`Download RAM | frame ${n} | tick ${snapshot.tick || 0}`);
+          ui.setPlaybackInfo(`Download RAM | frame ${n} | time ${formatSimSeconds(snapshot.tick || 0)}`);
         }
       }
     },
@@ -542,7 +567,7 @@ async function main() {
   }
 
   battlefield.start();
-  battlefield.setZoom(zoomSlider ? zoomSlider.value : 1);
+  battlefield.setZoom(INITIAL_BATTLEFIELD_ZOOM);
   battlefield.setTeamMeta(ui.getTeamsMeta());
 
   function activateSpeedButton(speed) {
@@ -623,14 +648,14 @@ async function main() {
     if (message.type === 'sim:tick') {
       const payload = message.payload || {};
       replay.pushSnapshot(payload);
-      ui.setStatus(`Tick ${payload.tick || 0}`);
+      ui.setStatus(`Time ${formatSimSeconds(payload.tick || 0)}`);
       return;
     }
 
     if (message.type === 'sim:end') {
       replay.finishRecording({ autoPlay: true });
       activateSpeedButton(1);
-      ui.setResult(message.payload || {});
+      ui.setResult(buildResultDisplay(message.payload || {}));
       updateAnalytics(message.payload || {});
       ui.setStatus('Simulation ended');
 

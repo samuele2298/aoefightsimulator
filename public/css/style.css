@@ -139,15 +139,10 @@ h2 {
 
 .template-inline {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   gap: 6px;
   align-items: center;
   width: 100%;
-}
-
-.template-inline .btn {
-  width: auto;
-  min-width: 70px;
 }
 
 .replay-actions {
@@ -730,6 +725,19 @@ input[type='number'] {
   color: #ebf2fc;
   font-size: 1rem;
   font-weight: 600;
+}
+
+.credits-game {
+  display: inline-block;
+  margin: 0 0 6px;
+  color: #f2ce8a;
+  font-size: 0.96rem;
+  text-decoration: none;
+}
+
+.credits-game:hover {
+  color: #ffe4ad;
+  text-decoration: underline;
 }
 
 .credits-email {
