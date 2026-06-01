@@ -86,6 +86,105 @@ function stripSengokuDefaultClasses(classes, civ) {
   return classes.filter((c) => c !== 'deflective_armor');
 }
 
+function buildHealingProfile(entry, variation) {
+  const id = String(entry && entry.id ? entry.id : '').toLowerCase();
+  const description = String(variation && variation.description ? variation.description : '').toLowerCase();
+  const classes = [
+    ...(Array.isArray(variation && variation.classes) ? variation.classes : []),
+    ...(Array.isArray(entry && entry.classes) ? entry.classes : []),
+    ...(Array.isArray(variation && variation.displayClasses) ? variation.displayClasses : []),
+    ...(Array.isArray(entry && entry.displayClasses) ? entry.displayClasses : []),
+  ].map((value) => String(value || '').toLowerCase());
+
+  const hasMonkClass = classes.includes('monk');
+  const hasHealerElephantClass = classes.includes('healer_elephant');
+  const hasReligiousHealText = description.includes('heals friendly units') || description.includes('heals units');
+  const hasMassHealText = description.includes('mass heal') || description.includes('healing aura');
+  const cannotHealOthers = description.includes('cannot heal others');
+  const isHospitalier = id.includes('hospitalier');
+
+  const healer = {
+    enabled: false,
+    singleTarget: {
+      enabled: false,
+      rate: 3,
+      range: 3.25,
+      acquireRange: 10,
+    },
+    aura: {
+      enabled: false,
+      rate: 1.8,
+      radius: 3.4,
+      requiresAttack: false,
+    },
+    onAttackHeal: {
+      enabled: false,
+      amount: 7,
+      radius: 3,
+    },
+  };
+
+  const isReligiousHealer = (hasMonkClass || hasReligiousHealText) && !cannotHealOthers && !isHospitalier;
+  if (isReligiousHealer) {
+    healer.enabled = true;
+    healer.singleTarget.enabled = true;
+  }
+
+  if (id === 'dervish') {
+    healer.enabled = true;
+    healer.singleTarget.enabled = false;
+    healer.aura.enabled = true;
+    healer.aura.rate = 3.2;
+    healer.aura.radius = 4.2;
+  }
+
+  if (id === 'imam') {
+    healer.enabled = true;
+    healer.singleTarget.enabled = true;
+    healer.singleTarget.rate = 3.5;
+    healer.aura.enabled = true;
+    healer.aura.rate = 2.3;
+    healer.aura.radius = 3.6;
+  }
+
+  if (id === 'warrior-monk' || id === 'khaganate-warrior-monk') {
+    healer.enabled = true;
+    healer.singleTarget.enabled = true;
+    healer.singleTarget.rate = 3.2;
+    healer.singleTarget.acquireRange = 11;
+  }
+
+  if (id === 'ikko-ikki-monk') {
+    healer.enabled = true;
+    healer.singleTarget.enabled = false;
+    healer.onAttackHeal.enabled = true;
+    healer.onAttackHeal.amount = 8;
+    healer.onAttackHeal.radius = 3.2;
+  }
+
+  if (hasHealerElephantClass || id === 'healer-elephant') {
+    healer.enabled = true;
+    healer.singleTarget.enabled = true;
+    healer.singleTarget.rate = 4.2;
+    healer.singleTarget.range = 3.75;
+    healer.singleTarget.acquireRange = 12;
+    healer.aura.enabled = true;
+    healer.aura.rate = 2.5;
+    healer.aura.radius = 4.5;
+  }
+
+  if (hasMassHealText && !healer.aura.enabled) {
+    healer.enabled = true;
+    healer.aura.enabled = true;
+  }
+
+  if (!healer.enabled) {
+    return null;
+  }
+
+  return healer;
+}
+
 function normalizeUnit(entry, civ, age) {
   const variation = pickVariation(entry, civ, age);
   if (!variation) {
@@ -94,6 +193,8 @@ function normalizeUnit(entry, civ, age) {
 
   const iconUrl = variation.icon || entry.icon || null;
   const iconKey = toIconKey(iconUrl);
+
+  const healing = buildHealingProfile(entry, variation);
 
   return {
     id: entry.id,
@@ -114,6 +215,7 @@ function normalizeUnit(entry, civ, age) {
     costs: variation.costs || { food: 0, wood: 0, gold: 0, stone: 0, total: 0, popcap: 1 },
     weapons: Array.isArray(variation.weapons) ? variation.weapons.map(normalizeWeapon) : [],
     armor: normalizeArmorList(variation.armor),
+    healing,
     icon: iconUrl,
     iconKey,
   };
@@ -136,7 +238,6 @@ function normalizeUnits(unitsRaw, options = {}) {
       }
       return true;
     })
-    .filter((u) => u.weapons.length > 0)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 

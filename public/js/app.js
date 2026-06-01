@@ -4,7 +4,7 @@ import { createBattlefieldRenderer } from './battlefield2d.js';
 
 const SIM_SECONDS_PER_TICK = 0.1;
 const INITIAL_BATTLEFIELD_ZOOM = 2.5;
-const DEFAULT_PLAYBACK_SPEED = 0.5;
+const DEFAULT_PLAYBACK_SPEED = 1;
 
 function mean(values) {
   if (!values.length) {

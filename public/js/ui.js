@@ -383,11 +383,15 @@ function isBannedUnit(unit) {
     .map((c) => String(c).toLowerCase())
     .join(' ');
 
+  const landTraderPattern = /\b(trader|trade\s*caravan|trade\s*camel|atabeg|merchant|included_by_trader_hotkeys|trade_cart)\b/;
   const navalPattern = /\b(ship|boat|naval|war\s*cog|hulk|galley|demolition\s*ship|dhow|junk|fishing|transport)\b/;
   const siegePattern = /\b(siege|mangonel|trebuchet|bombard|springald|ribauldequin|culverin|traction\s*trebuchet|nest\s*of\s*bees|great\s*bombard|cannon|battering\s*ram)\b/;
-  const bannedPattern = /\b(villager|scout|king|battering\s*ram|demolition\s*ship|galley|hulk|monk|imam|priest|dervish)\b/;
+  const bannedPattern = /\b(villager|scout|king|battering\s*ram|demolition\s*ship|galley|hulk)\b/;
 
   return (
+    landTraderPattern.test(id) ||
+    landTraderPattern.test(name) ||
+    landTraderPattern.test(classes) ||
     bannedPattern.test(id) ||
     bannedPattern.test(name) ||
     navalPattern.test(id) ||
@@ -942,6 +946,10 @@ function openUnitStratDialogForItem(team, item, unitDef) {
     return;
   }
 
+  if (isDervishUnit(unitDef)) {
+    return;
+  }
+
   const isRanged = unitDef ? unitIsRanged(unitDef) : false;
   const current = item.strategy || {};
   const ff = current.focusFire || {};
@@ -1204,6 +1212,10 @@ function unitIsRanged(def) {
     && def.weapons.some((weapon) => weapon.type === 'ranged' && weapon.range && weapon.range.max > 1);
 }
 
+function isDervishUnit(def) {
+  return String(def && def.id ? def.id : '').toLowerCase() === 'dervish';
+}
+
 function unitCanConfigureCharge(def) {
   const id = String(def && def.id ? def.id : '').toLowerCase();
   const classes = [
@@ -1213,6 +1225,7 @@ function unitCanConfigureCharge(def) {
 
   const excluded = id === 'camel-raider'
     || id === 'desert-raider'
+    || id === 'dervish'
     || (id.includes('camel') && id.includes('raider'))
     || id.includes('elephant')
     || classes.some((entry) => entry.includes('elephant'));
@@ -1460,15 +1473,17 @@ function renderUnitList(team) {
     const actions = document.createElement('div');
     actions.className = 'unit-batch-actions';
 
-    const stratBtn = document.createElement('button');
-    stratBtn.type = 'button';
-    stratBtn.className = 'btn unit-batch-strat-btn';
-    stratBtn.textContent = '⚔';
-    stratBtn.title = 'Unit strategy';
-    stratBtn.addEventListener('click', () => {
-      openUnitStratDialogForItem(team, item, unitDef);
-    });
-    actions.appendChild(stratBtn);
+    if (!isDervishUnit(unitDef)) {
+      const stratBtn = document.createElement('button');
+      stratBtn.type = 'button';
+      stratBtn.className = 'btn unit-batch-strat-btn';
+      stratBtn.textContent = '⚔';
+      stratBtn.title = 'Unit strategy';
+      stratBtn.addEventListener('click', () => {
+        openUnitStratDialogForItem(team, item, unitDef);
+      });
+      actions.appendChild(stratBtn);
+    }
 
     if ((techOptions.length || supportsChargeToggle || supportsDeflectiveArmorToggle || supportsPaviseToggle) && unitDef) {
       const techBtn = document.createElement('button');

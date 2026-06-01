@@ -14,6 +14,7 @@ const { selectTarget: selectStraight } = require('./strategies/straightFight');
 const DEFLECTIVE_ARMOR_RECHARGE_TICKS = Math.round(8 / config.tickDelta);
 const CHARGE_ATTACK = 3; // Only in the charge attack
 const MIN_REATTACK_SECS = 0.5;
+const HEAL_EPSILON = 0.01;
 
 function weaponRange(unit) {
   const weapon = unit.primaryWeapon;
@@ -21,6 +22,10 @@ function weaponRange(unit) {
     return 1;
   }
   return typeof weapon.range.max === 'number' ? weapon.range.max : 1;
+}
+
+function teamForwardDirection(team) {
+  return team === 'A' ? 1 : -1;
 }
 
 /**
@@ -89,6 +94,7 @@ function unitDebugSnapshot(unit) {
         }
       : null,
     techContext: unit.def && unit.def.debugTechContext ? unit.def.debugTechContext : null,
+    healing: unit.def && unit.def.healing ? unit.def.healing : null,
   };
 }
 
@@ -359,7 +365,7 @@ class SimulationEngine {
   }
 
   moveForwardAclick(unit, allies) {
-    const dir = unit.team === 'A' ? 1 : -1;
+    const dir = teamForwardDirection(unit.team);
     this.moveToPoint(
       unit,
       {
@@ -370,7 +376,236 @@ class SimulationEngine {
     );
   }
 
-  fireAttack(unit, target, enemies) {
+  hasEnemyInRange(unit, enemies) {
+    const range = weaponRange(unit);
+    for (const enemy of enemies) {
+      if (enemy.dead) {
+        continue;
+      }
+      if (distance(unit, enemy) <= range) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  buildHealerLines(unit, allies) {
+    const dir = teamForwardDirection(unit.team);
+    const aliveAllies = allies.filter((ally) => ally && !ally.dead && ally.id !== unit.id);
+    if (!aliveAllies.length) {
+      return null;
+    }
+
+    const combatAllies = aliveAllies.filter((ally) => ally.hasWeapon && ally.hasWeapon());
+    const refs = combatAllies.length ? combatAllies : aliveAllies;
+    if (!refs.length) {
+      return null;
+    }
+
+    const xs = refs.map((ally) => ally.x);
+    const ys = refs.map((ally) => ally.y);
+    const frontlineX = dir > 0 ? Math.max(...xs) : Math.min(...xs);
+    const rearlineX = dir > 0 ? Math.min(...xs) : Math.max(...xs);
+    const supportX = rearlineX - (dir * 1.4);
+    const offsideX = frontlineX - (dir * 0.6);
+
+    return {
+      dir,
+      frontlineX,
+      rearlineX,
+      supportX,
+      offsideX,
+      centerY: ys.reduce((sum, y) => sum + y, 0) / ys.length,
+    };
+  }
+
+  clampHealerTargetX(unit, x, lines) {
+    if (!lines) {
+      return x;
+    }
+    if (lines.dir > 0) {
+      return Math.min(x, lines.offsideX);
+    }
+    return Math.max(x, lines.offsideX);
+  }
+
+  findHealTarget(unit, allies) {
+    const healing = unit.healingProfile ? unit.healingProfile() : null;
+    const single = healing && healing.singleTarget && healing.singleTarget.enabled
+      ? healing.singleTarget
+      : null;
+    if (!single) {
+      return null;
+    }
+
+    const maxAcquireRange = typeof single.acquireRange === 'number' ? single.acquireRange : 10;
+    let best = null;
+    let bestDist = Number.POSITIVE_INFINITY;
+
+    for (const ally of allies) {
+      if (!ally || ally.dead || ally.hp >= ally.maxHp - HEAL_EPSILON || ally.id === unit.id) {
+        continue;
+      }
+      const d = distance(unit, ally);
+      if (d > maxAcquireRange) {
+        continue;
+      }
+      if (!best || d < bestDist || (Math.abs(d - bestDist) < 0.0001 && (ally.maxHp - ally.hp) > (best.maxHp - best.hp))) {
+        best = ally;
+        bestDist = d;
+      }
+    }
+
+    return best;
+  }
+
+  applyAuraHealing(unit, allies, requireAttackTrigger = false) {
+    const healing = unit.healingProfile ? unit.healingProfile() : null;
+    const aura = healing && healing.aura && healing.aura.enabled ? healing.aura : null;
+    if (!aura) {
+      return false;
+    }
+    if (requireAttackTrigger && !aura.requiresAttack) {
+      return false;
+    }
+    if (!requireAttackTrigger && aura.requiresAttack) {
+      return false;
+    }
+
+    const radius = typeof aura.radius === 'number' ? aura.radius : 3.4;
+    const perTick = Math.max(0, (typeof aura.rate === 'number' ? aura.rate : 0) * config.tickDelta);
+    if (perTick <= 0) {
+      return false;
+    }
+
+    let healedAny = false;
+    for (const ally of allies) {
+      if (!ally || ally.id === unit.id || ally.dead || ally.hp >= ally.maxHp - HEAL_EPSILON) {
+        continue;
+      }
+      if (distance(unit, ally) <= radius) {
+        ally.applyHealing(perTick);
+        healedAny = true;
+      }
+    }
+
+    return healedAny;
+  }
+
+  applySingleTargetHealing(unit, target) {
+    const healing = unit.healingProfile ? unit.healingProfile() : null;
+    const single = healing && healing.singleTarget && healing.singleTarget.enabled
+      ? healing.singleTarget
+      : null;
+    if (!single || !target || target.dead) {
+      return false;
+    }
+
+    const range = typeof single.range === 'number' ? single.range : 3.25;
+    if (distance(unit, target) > range) {
+      return false;
+    }
+
+    const perTick = Math.max(0, (typeof single.rate === 'number' ? single.rate : 0) * config.tickDelta);
+    if (perTick <= 0) {
+      return false;
+    }
+
+    target.applyHealing(perTick);
+    return true;
+  }
+
+  applyOnAttackHealing(unit, allies) {
+    const healing = unit.healingProfile ? unit.healingProfile() : null;
+    const onAttack = healing && healing.onAttackHeal && healing.onAttackHeal.enabled
+      ? healing.onAttackHeal
+      : null;
+    if (!onAttack) {
+      return;
+    }
+
+    const amount = Math.max(0, typeof onAttack.amount === 'number' ? onAttack.amount : 0);
+    const radius = typeof onAttack.radius === 'number' ? onAttack.radius : 3;
+    if (amount <= 0) {
+      return;
+    }
+
+    for (const ally of allies) {
+      if (!ally || ally.dead || ally.hp >= ally.maxHp - HEAL_EPSILON) {
+        continue;
+      }
+      if (distance(unit, ally) <= radius) {
+        ally.applyHealing(amount);
+      }
+    }
+  }
+
+  updateUnitHealer(unit, allies, enemies) {
+    const healing = unit.healingProfile ? unit.healingProfile() : null;
+    if (!healing || !unit.canHeal || !unit.canHeal()) {
+      return false;
+    }
+
+    const canAttack = unit.hasWeapon && unit.hasWeapon();
+
+    // Healer units that can fight are handled by normal combat logic/strategy.
+    if (canAttack) {
+      this.applyAuraHealing(unit, allies, false);
+      return false;
+    }
+
+    this.applyAuraHealing(unit, allies, false);
+
+    const healTarget = this.findHealTarget(unit, allies);
+    const lines = this.buildHealerLines(unit, allies);
+
+    if (healTarget) {
+      const single = healing.singleTarget && healing.singleTarget.enabled ? healing.singleTarget : null;
+      if (single) {
+        const inRange = distance(unit, healTarget) <= (typeof single.range === 'number' ? single.range : 3.25);
+        if (inRange) {
+          unit.state = 'HEALING';
+          unit.targetId = healTarget.id;
+          this.applySingleTargetHealing(unit, healTarget);
+          return true;
+        }
+
+        const advancePoint = {
+          x: this.clampHealerTargetX(unit, healTarget.x, lines),
+          y: healTarget.y,
+        };
+
+        unit.state = 'MOVING';
+        unit.targetId = healTarget.id;
+        this.moveToPoint(unit, advancePoint, allies);
+        return true;
+      }
+    }
+
+    if (lines) {
+      const holdPoint = {
+        x: lines.supportX,
+        y: lines.centerY,
+      };
+
+      const holdDist = distance(unit, holdPoint);
+      if (holdDist > 0.7) {
+        unit.state = 'MOVING';
+        unit.targetId = null;
+        this.moveToPoint(unit, holdPoint, allies);
+      } else {
+        unit.state = 'IDLE';
+        unit.targetId = null;
+      }
+      return true;
+    }
+
+    unit.state = 'IDLE';
+    unit.targetId = null;
+    return true;
+  }
+
+  fireAttack(unit, target, enemies, allies) {
     unit.registerCombat(this.tick);
     target.registerCombat(this.tick);
 
@@ -414,6 +649,10 @@ class SimulationEngine {
             enemy.registerCombat(this.tick);
           }
         }
+      }
+
+      if (Array.isArray(allies) && allies.length) {
+        this.applyOnAttackHealing(unit, allies);
       }
     } else {
       emitCombatDebugLog({
@@ -495,7 +734,7 @@ class SimulationEngine {
       unit.state = 'ATTACKING';
       if (groupState.volleyTick === this.tick && unit.lastGroupVolleyTick !== groupState.volleyTick) {
         if (dist <= range) {
-          this.fireAttack(unit, target, enemies);
+          this.fireAttack(unit, target, enemies, allies);
         }
         unit.lastGroupVolleyTick = groupState.volleyTick;
       }
@@ -531,7 +770,7 @@ class SimulationEngine {
     unit.state = 'ATTACKING';
     if (unit.lastGroupVolleyTick !== groupState.volleyTick) {
       if (dist <= range) {
-        this.fireAttack(unit, target, enemies);
+        this.fireAttack(unit, target, enemies, allies);
       }
       unit.lastGroupVolleyTick = groupState.volleyTick;
     }
@@ -592,7 +831,7 @@ class SimulationEngine {
       const recoveryTicks = Math.max(1, Math.ceil(getRecoveryDuration(unit) / config.tickDelta));
       unit.attackAnimEndTick = this.tick + immobileTicks;
       unit.reattackReadyTick = this.tick + immobileTicks + recoveryTicks;
-      this.fireAttack(unit, target, enemies);
+      this.fireAttack(unit, target, enemies, allies);
     }
   }
 
@@ -618,6 +857,10 @@ class SimulationEngine {
 
   updateUnit(unit, allies, enemies) {
     if (unit.dead) {
+      return;
+    }
+
+    if (this.updateUnitHealer(unit, allies, enemies)) {
       return;
     }
 

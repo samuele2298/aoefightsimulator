@@ -31,6 +31,14 @@ function cloneUnitDef(def) {
           modifiers: Array.isArray(weapon.modifiers) ? [...weapon.modifiers] : [],
         }))
       : [],
+    healing: def.healing
+      ? {
+          ...def.healing,
+          singleTarget: def.healing.singleTarget ? { ...def.healing.singleTarget } : { enabled: false },
+          aura: def.healing.aura ? { ...def.healing.aura } : { enabled: false },
+          onAttackHeal: def.healing.onAttackHeal ? { ...def.healing.onAttackHeal } : { enabled: false },
+        }
+      : null,
   };
 }
 
@@ -211,6 +219,36 @@ function applyHitpointsEffect(def, effect, value) {
   }
 }
 
+function applyHealingRateEffect(def, effect, value) {
+  const amount = Number(value || 0);
+  if (!Number.isFinite(amount) || amount === 0 || !def.healing) {
+    return;
+  }
+
+  const applyToProfile = (profile) => {
+    if (!profile || !profile.enabled || typeof profile.rate !== 'number') {
+      return;
+    }
+
+    if (effect === 'multiply') {
+      profile.rate = roundStat(profile.rate * amount);
+    } else if (effect === 'change') {
+      profile.rate = roundStat(profile.rate + amount);
+    }
+  };
+
+  applyToProfile(def.healing.singleTarget);
+  applyToProfile(def.healing.aura);
+
+  if (def.healing.onAttackHeal && def.healing.onAttackHeal.enabled && typeof def.healing.onAttackHeal.amount === 'number') {
+    if (effect === 'multiply') {
+      def.healing.onAttackHeal.amount = roundStat(def.healing.onAttackHeal.amount * amount);
+    } else if (effect === 'change') {
+      def.healing.onAttackHeal.amount = roundStat(def.healing.onAttackHeal.amount + amount);
+    }
+  }
+}
+
 function applyRangeEffect(def, effect, value) {
   const amount = Number(value || 0);
   if (!Number.isFinite(amount) || amount === 0) {
@@ -311,6 +349,9 @@ function applyRawEffectToUnit(def, rawEffect) {
       break;
     case 'maxRange':
       applyRangeEffect(def, effect, value);
+      break;
+    case 'healingRate':
+      applyHealingRateEffect(def, effect, value);
       break;
     case 'unknown':
       applyUnknownEffectToUnit(def, rawEffect);

@@ -136,12 +136,18 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
   expandedUnits.sort((a, b) => {
     const left = a.def;
     const right = b.def;
+    const aHealer = Boolean(left.healing && left.healing.enabled);
+    const bHealer = Boolean(right.healing && right.healing.enabled);
     const aRanged = Array.isArray(left.weapons)
       ? left.weapons.some((w) => w.type === 'ranged' && w.range && w.range.max > 1)
       : false;
     const bRanged = Array.isArray(right.weapons)
       ? right.weapons.some((w) => w.type === 'ranged' && w.range && w.range.max > 1)
       : false;
+
+    if (aHealer !== bHealer) {
+      return aHealer ? -1 : 1;
+    }
 
     if (aRanged === bRanged) {
       return 0;

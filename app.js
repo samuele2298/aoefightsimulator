@@ -71,7 +71,7 @@ const main = async () => {
 
   // ── Boot ──────────────────────────────────────────────────────────────────────
   const port = normalizePort(config.port);
-  const host = '0.0.0.0'; // Listen on all interfaces //If 'localhost' -> accepts only local connections
+  const host = '0.0.0.0'; // Listen on all interfaces //Se 'localhost' -> accetta solo connessioni locali'
   const server = app.listen(port, host);
 
   const wss = new WebSocketServer({ server, path: '/ws' });

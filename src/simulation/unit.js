@@ -76,6 +76,30 @@ class SimUnit {
     return weapon.type === 'ranged' && weapon.range && weapon.range.max > 1;
   }
 
+  isHealer() {
+    return Boolean(this.def && this.def.healing && this.def.healing.enabled);
+  }
+
+  canHeal() {
+    const profile = this.def && this.def.healing;
+    if (!profile || !profile.enabled) {
+      return false;
+    }
+    return Boolean(
+      (profile.singleTarget && profile.singleTarget.enabled)
+      || (profile.aura && profile.aura.enabled)
+      || (profile.onAttackHeal && profile.onAttackHeal.enabled)
+    );
+  }
+
+  hasWeapon() {
+    return Boolean(this.primaryWeapon);
+  }
+
+  healingProfile() {
+    return this.def && this.def.healing ? this.def.healing : null;
+  }
+
   hasClass(className) {
     return Array.isArray(this.def.classes) && this.def.classes.includes(className);
   }
@@ -190,6 +214,19 @@ class SimUnit {
       this.dead = true;
       this.state = 'DEAD';
     }
+  }
+
+  applyHealing(value) {
+    if (this.dead) {
+      return;
+    }
+
+    const amount = Number(value || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return;
+    }
+
+    this.hp = Math.min(this.maxHp, this.hp + amount);
   }
 
   toSnapshot() {
