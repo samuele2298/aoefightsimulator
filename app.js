@@ -13,38 +13,88 @@ const dataRoutes = require('./src/routes/dataRoutes');
 const simulationRoutes = require('./src/routes/simulationRoutes');
 const { registerWsHandlers } = require('./src/simulation/wsHandler');
 
-const app = express();
+const normalizePort = (val) => {
+  const port = parseInt(val, 10);
+  if (isNaN(port)) return val;
+  if (port >= 0)   return port;
+  return false;
+};
 
-// Security / parse
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
-app.use(express.json());
+const main = async () => {
+  logger.info('Starting server on: ' + config.port);
+  const app = express();
 
-// Serve frontend static files
-app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// Serve aoe4data unit/building images locally
-app.use(
-  '/data/images',
-  express.static(path.join(__dirname, 'node_modules/aoe4data/images'))
-);
+  if (config.NODE_ENV === 'production') {
+    app.use(cors({ origin: config.DOMAIN }));
+    app.disable('x-powered-by');
+    app.use(helmet({
+      // Allow inline styles used by public/offer.html served statically
+      contentSecurityPolicy: false,
+    }));
+  } else {
+    app.use(cors());
+  }
 
-// REST API routes
-app.use('/api/data', dataRoutes);
-app.use('/api/simulation', simulationRoutes);
+  // Trust reverse proxy (for rate limiting, IP detection)
+  app.set('trust proxy', 1);
 
-// Fallback: serve index.html for all non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+  // Request logging
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      logger.info(`${req.method} ${req.originalUrl} ${res.statusCode} - ${Date.now() - start}ms`);
+    });
+    next();
+  });
 
-// Create HTTP server and attach WebSocket server
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server, path: '/ws' });
-registerWsHandlers(wss);
+  // Serve frontend static files
+  app.use(express.static(path.join(__dirname, 'public')));
 
-server.listen(config.port, () => {
-  logger.info(`AoE4 Fight Simulator running on http://localhost:${config.port}`);
-});
+  // Serve aoe4data unit/building images locally
+  app.use(
+    '/data/images',
+    express.static(path.join(__dirname, 'node_modules/aoe4data/images'))
+  );
 
-module.exports = { app, server, wss };
+  // REST API routes
+  app.use('/api/data', dataRoutes);
+  app.use('/api/simulation', simulationRoutes);
+
+  // Fallback: serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+
+
+  // ── Boot ──────────────────────────────────────────────────────────────────────
+  const port = normalizePort(config.port);
+  const host = '0.0.0.0'; // Listen on all interfaces //Se 'localhost' -> accetta solo connessioni locali'
+  const server = app.listen(port, host);
+
+  const wss = new WebSocketServer({ server, path: '/ws' });
+  registerWsHandlers(wss);
+
+
+  // Graceful shutdown
+  const shutdown = async (signal) => {
+    logger.info(`[SHUTDOWN] ${signal} received. Closing server...`);
+    try {
+      server.close(async () => {
+        await db.$pool.end();
+        logger.info('[SHUTDOWN] Server closed.');
+        process.exit(0);
+      });
+    } catch (err) {
+      logger.error('[SHUTDOWN] Error during shutdown:', err);
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT',  () => shutdown('SIGINT'));
+}
+
+main();

@@ -6,7 +6,11 @@ const SimUnit = require('./unit');
 const SimulationEngine = require('./engine');
 
 const { getUnitsRaw, getTechnologiesRaw } = require('../data/loader');
-const { normalizeUnits, normalizeTechnologies } = require('../data/normalizer');
+const {
+  normalizeUnits,
+  normalizeTechnologies,
+  isExcludedTechnologyId,
+} = require('../data/normalizer');
 const { buildLinePositions } = require('./formations/line');
 const { buildNormalPositions } = require('./formations/normal');
 const { createObstacleEnvironment } = require('./environment/obstaclePresets');
@@ -53,8 +57,10 @@ function buildUnitPool({ civ, age }) {
 function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX) {
   const pool = buildUnitPool({ civ: teamConfig.civ, age: teamConfig.age });
   const requested = Array.isArray(teamConfig.units) ? teamConfig.units : [];
-  const selectedTechs = Array.isArray(teamConfig.techs) ? teamConfig.techs : [];
-  const defaultUnitTechIds = Array.isArray(teamConfig.unitTechs) ? teamConfig.unitTechs : [];
+  const selectedTechs = (Array.isArray(teamConfig.techs) ? teamConfig.techs : [])
+    .filter((techId) => !isExcludedTechnologyId(techId));
+  const defaultUnitTechIds = (Array.isArray(teamConfig.unitTechs) ? teamConfig.unitTechs : [])
+    .filter((techId) => !isExcludedTechnologyId(techId));
   const availableTechs = normalizeTechnologies(getTechnologiesRaw(), {
     civ: teamConfig.civ,
     age: teamConfig.age,
@@ -69,7 +75,7 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
       ? item.attackMode
       : null;
     const selectedUnitTechIds = Array.isArray(item && item.unitTechs)
-      ? item.unitTechs
+      ? item.unitTechs.filter((techId) => !isExcludedTechnologyId(techId))
       : defaultUnitTechIds;
     const selectedUnitTechs = selectedUnitTechIds
       .map((techId) => unitTechsById.get(techId))
@@ -85,6 +91,13 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
         age: teamConfig.age,
         unitTechs: selectedUnitTechs,
       });
+      def.debugTechContext = {
+        civ: teamConfig.civ,
+        age: teamConfig.age,
+        teamTechIds: [...selectedTechs],
+        unitTechIds: [...selectedUnitTechIds],
+        unitTechNames: selectedUnitTechs.map((tech) => tech.name || tech.id),
+      };
       if (appliedMode) {
         def = {
           ...def,
@@ -100,10 +113,13 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
     const chargeEnabled = item && typeof item.chargeEnabled === 'boolean'
       ? item.chargeEnabled
       : true;
+    const deflectiveArmorEnabled = item && typeof item.deflectiveArmorEnabled === 'boolean'
+      ? item.deflectiveArmorEnabled
+      : true;
     const itemStrategy = (item && item.strategy) || { type: 'straight' };
     const count = Math.max(1, parseInt(item.count || 0, 10));
     for (let i = 0; i < count; i += 1) {
-      expandedUnits.push({ def, chargeEnabled, strategy: itemStrategy });
+      expandedUnits.push({ def, chargeEnabled, deflectiveArmorEnabled, strategy: itemStrategy });
     }
   }
 
@@ -151,6 +167,7 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
       team,
       def: entry.def,
       chargeEnabled: entry.chargeEnabled,
+      deflectiveArmorEnabled: entry.deflectiveArmorEnabled,
       strategy: entry.strategy || { type: 'straight' },
       x: clamp(baseX + jitter.dx, 0, mapWidth),
       y: clamp(baseY + jitter.dy, 0, mapHeight),

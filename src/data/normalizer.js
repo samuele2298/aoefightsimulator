@@ -2,6 +2,17 @@
 
 const path = require('path');
 
+const EXCLUDED_TECH_IDS = new Set([
+  'greased-axles',
+  'greased-axles-improved',
+  'siege-works',
+  'siege-works-improved',
+]);
+
+function isExcludedTechnologyId(id) {
+  return EXCLUDED_TECH_IDS.has(String(id || '').toLowerCase());
+}
+
 function toIconKey(iconUrl) {
   if (!iconUrl || typeof iconUrl !== 'string') {
     return null;
@@ -63,6 +74,16 @@ function normalizeArmorList(armorList) {
   }));
 }
 
+// Sengoku units have deflective_armor in the raw data but it is a tech unlock
+// for that civilisation (not a default trait). Strip it here so the engine
+// only grants the ability when the 'sengoku-deflective-armor' tech is selected.
+function stripSengokuDefaultClasses(classes, civ) {
+  if (civ !== 'sen') {
+    return classes;
+  }
+  return classes.filter((c) => c !== 'deflective_armor');
+}
+
 function normalizeUnit(entry, civ, age) {
   const variation = pickVariation(entry, civ, age);
   if (!variation) {
@@ -78,7 +99,7 @@ function normalizeUnit(entry, civ, age) {
     variationId: variation.id,
     name: variation.name || entry.name,
     civs: entry.civs || variation.civs || [],
-    classes: variation.classes || entry.classes || [],
+    classes: stripSengokuDefaultClasses(variation.classes || entry.classes || [], civ),
     displayClasses: variation.displayClasses || entry.displayClasses || [],
     age: variation.age || entry.minAge || 1,
     hitpoints: typeof variation.hitpoints === 'number' ? variation.hitpoints : 1,
@@ -155,6 +176,7 @@ function normalizeTechnologies(techRaw, options = {}) {
       };
     })
     .filter(Boolean)
+    .filter((t) => !isExcludedTechnologyId(t.id))
     .filter((t) => {
       if (civ && !t.civs.includes(civ)) {
         return false;
@@ -208,4 +230,5 @@ module.exports = {
   normalizeCivilizations,
   normalizeTechnologies,
   normalizeBuildings,
+  isExcludedTechnologyId,
 };

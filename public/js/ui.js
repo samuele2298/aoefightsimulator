@@ -724,6 +724,8 @@ function renderActiveUnitTechDialog() {
   const optionsWrap = byId('unit-tech-item-options');
   const chargeWrap = byId('unit-tech-item-charge-wrap');
   const chargeInput = byId('unit-tech-item-charge-active');
+  const deflectiveWrap = byId('unit-tech-item-deflective-wrap');
+  const deflectiveInput = byId('unit-tech-item-deflective-active');
   if (!titleEl || !optionsWrap) {
     return;
   }
@@ -732,6 +734,10 @@ function renderActiveUnitTechDialog() {
   if (chargeWrap && chargeInput) {
     chargeWrap.hidden = !context.supportsChargeToggle;
     chargeInput.checked = context.chargeEnabled;
+  }
+  if (deflectiveWrap && deflectiveInput) {
+    deflectiveWrap.hidden = !context.supportsDeflectiveArmorToggle;
+    deflectiveInput.checked = context.deflectiveArmorEnabled;
   }
   optionsWrap.innerHTML = '';
 
@@ -777,7 +783,8 @@ function openUnitTechDialogForItem(team, item, unitDef) {
   }
   const options = resolveUnitTechOptionsForUnit(team, unitDef);
   const supportsChargeToggle = unitCanConfigureCharge(unitDef);
-  if (!options.length && !supportsChargeToggle) {
+  const supportsDeflectiveArmorToggle = unitCanConfigureDeflectiveArmor(unitDef);
+  if (!options.length && !supportsChargeToggle && !supportsDeflectiveArmorToggle) {
     return;
   }
 
@@ -789,7 +796,9 @@ function openUnitTechDialogForItem(team, item, unitDef) {
     selectedIds,
     unitName: item.name,
     supportsChargeToggle,
+    supportsDeflectiveArmorToggle,
     chargeEnabled: item.chargeEnabled !== false,
+    deflectiveArmorEnabled: item.deflectiveArmorEnabled !== false,
   };
 
   renderActiveUnitTechDialog();
@@ -818,6 +827,7 @@ function bindUnitTechDialogHandlers() {
   const applyBtn = byId('unit-tech-item-apply');
   const optionsWrap = byId('unit-tech-item-options');
   const chargeInput = byId('unit-tech-item-charge-active');
+  const deflectiveInput = byId('unit-tech-item-deflective-active');
 
   if (!dialog || !clearBtn || !selectAllBtn || !applyBtn || !optionsWrap) {
     return;
@@ -858,6 +868,9 @@ function bindUnitTechDialogHandlers() {
     setSelectedUnitTechIdsForItem(team, item, selected);
     if (chargeInput && state.activeUnitTechDialog.supportsChargeToggle) {
       item.chargeEnabled = Boolean(chargeInput.checked);
+    }
+    if (deflectiveInput && state.activeUnitTechDialog.supportsDeflectiveArmorToggle) {
+      item.deflectiveArmorEnabled = Boolean(deflectiveInput.checked);
     }
     dialog.close();
     state.activeUnitTechDialog = null;
@@ -1139,11 +1152,40 @@ function unitIsRanged(def) {
 
 function unitCanConfigureCharge(def) {
   const id = String(def && def.id ? def.id : '').toLowerCase();
-  const excluded = id === 'sofa' || id === 'camel-raider' || id === 'camel-rider' || (id.includes('camel') && id.includes('raider'));
+  const classes = [
+    ...(Array.isArray(def && def.classes) ? def.classes : []),
+    ...(Array.isArray(def && def.displayClasses) ? def.displayClasses : []),
+  ].map((entry) => String(entry).toLowerCase());
+
+  const excluded = id === 'sofa'
+    || id === 'camel-raider'
+    || id === 'desert-raider'
+    || (id.includes('camel') && id.includes('raider'))
+    || id.includes('elephant')
+    || classes.some((entry) => entry.includes('elephant'));
   if (excluded) {
     return false;
   }
-  return id.includes('knight') || id.includes('horseman');
+
+  const isCavalryClass = classes.some((entry) => (
+    entry.includes('cavalry')
+    || entry.includes('horse')
+    || entry.includes('camel')
+  ));
+
+  return isCavalryClass
+    || id.includes('knight')
+    || id.includes('horseman')
+    || id.includes('camel');
+}
+
+function unitCanConfigureDeflectiveArmor(def) {
+  const classes = [
+    ...(Array.isArray(def && def.classes) ? def.classes : []),
+    ...(Array.isArray(def && def.displayClasses) ? def.displayClasses : []),
+  ].map((entry) => String(entry).toLowerCase());
+
+  return classes.includes('deflective_armor');
 }
 
 function unitIconDataUri(unit) {
@@ -1339,15 +1381,19 @@ function renderUnitList(team) {
     const batchResourceTotal = item.count * unitResourceTotal;
     const techOptions = unitDef ? resolveUnitTechOptionsForUnit(team, unitDef) : [];
     const supportsChargeToggle = unitDef ? unitCanConfigureCharge(unitDef) : false;
+    const supportsDeflectiveArmorToggle = unitDef ? unitCanConfigureDeflectiveArmor(unitDef) : false;
     const selectedTechIds = techOptions.length
       ? getSelectedUnitTechIdsForItem(team, item, techOptions, { autoInit: true })
       : [];
     const techSuffix = techOptions.length ? ` • tech ${selectedTechIds.length}/${techOptions.length}` : '';
     const chargeSuffix = supportsChargeToggle && item.chargeEnabled === false ? ' • charge off' : '';
+    const deflectiveSuffix = supportsDeflectiveArmorToggle && item.deflectiveArmorEnabled === false
+      ? ' • deflective off'
+      : '';
     const stratType = item.strategy && item.strategy.type ? item.strategy.type : 'straight';
     const stratLabel = stratType === 'kiting' ? 'kiting' : stratType === 'straightFocusFire' ? 'focus fire' : '';
     const stratSuffix = stratLabel ? ` • ${stratLabel}` : '';
-    count.textContent = `x${item.count} • ${batchResourceTotal} res${techSuffix}${chargeSuffix}${stratSuffix}`;
+    count.textContent = `x${item.count} • ${batchResourceTotal} res${techSuffix}${chargeSuffix}${deflectiveSuffix}${stratSuffix}`;
     meta.appendChild(title);
     meta.appendChild(count);
 
@@ -1364,7 +1410,7 @@ function renderUnitList(team) {
     });
     actions.appendChild(stratBtn);
 
-    if ((techOptions.length || supportsChargeToggle) && unitDef) {
+    if ((techOptions.length || supportsChargeToggle || supportsDeflectiveArmorToggle) && unitDef) {
       const techBtn = document.createElement('button');
       techBtn.type = 'button';
       techBtn.className = 'btn unit-batch-tech-btn';
@@ -1467,6 +1513,7 @@ async function applyTeamTemplate(team, templateTeam) {
       name: found.name,
       count: spec.count || 1,
       chargeEnabled: true,
+        deflectiveArmorEnabled: true,
       strategy: { type: defaultStratType },
     });
   }
@@ -1564,6 +1611,7 @@ function attachTeamHandlers(team) {
         attackMode,
         selectionKey,
         chargeEnabled: true,
+        deflectiveArmorEnabled: true,
         strategy: { type: 'straight' },
       };
       state.selectedUnits[team].push(created);
@@ -1593,6 +1641,7 @@ function readTeamConfig(team) {
         count: u.count,
         attackMode: u.attackMode || null,
         chargeEnabled: u.chargeEnabled !== false,
+        deflectiveArmorEnabled: u.deflectiveArmorEnabled !== false,
         strategy: u.strategy || { type: 'straight' },
         unitTechs: getSelectedUnitTechIdsForItem(
           team,

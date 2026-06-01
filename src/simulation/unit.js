@@ -2,10 +2,18 @@
 
 const KNIGHT_CHARGE_MULTIPLIER = 1.5;
 const HORSEMAN_CHARGE_MULTIPLIER = 1.35;
-const ROYAL_KNIGHT_CHARGE_FLAT_BONUS = 3;
 
 class SimUnit {
-  constructor({ id, team, def, x, y, chargeEnabled = true, strategy = null }) {
+  constructor({
+    id,
+    team,
+    def,
+    x,
+    y,
+    chargeEnabled = true,
+    deflectiveArmorEnabled = true,
+    strategy = null,
+  }) {
     this.id = id;
     this.team = team;
     this.def = def;
@@ -21,11 +29,11 @@ class SimUnit {
     this.dead = false;
 
     this.lastCombatTick = Number.NEGATIVE_INFINITY;
+    this.deflectiveArmorEnabled = deflectiveArmorEnabled !== false;
     this.deflectiveArmorCharge = this.hasDeflectiveArmor();
     this.chargeEnabled = chargeEnabled !== false;
     this.chargeReady = this.canUseCharge();
     this.chargeApproachActive = false;
-    this.royalKnightChargeBonusTicks = 0;
 
     this.strategy = strategy || { type: 'straight' };
     this.kitingPhase = 'approach';
@@ -75,7 +83,7 @@ class SimUnit {
   }
 
   hasDeflectiveArmor() {
-    return this.hasClass('deflective_armor');
+    return this.deflectiveArmorEnabled && this.hasClass('deflective_armor');
   }
 
   isRoyalKnight() {
@@ -88,8 +96,15 @@ class SimUnit {
     }
 
     const id = String(this.def.id || '').toLowerCase();
+    const classes = [
+      ...(Array.isArray(this.def.classes) ? this.def.classes : []),
+      ...(Array.isArray(this.def.displayClasses) ? this.def.displayClasses : []),
+    ].map((entry) => String(entry).toLowerCase());
+
     const isCamelRaider = id.includes('camel') && id.includes('raider');
-    if (id === 'sofa' || id === 'camel-rider' || id === 'camel-raider' || isCamelRaider) {
+    const isDesertRaider = id === 'desert-raider';
+    const isElephant = id.includes('elephant') || classes.some((entry) => entry.includes('elephant'));
+    if (id === 'sofa' || id === 'camel-raider' || isCamelRaider || isDesertRaider || isElephant) {
       return false;
     }
 
@@ -111,10 +126,6 @@ class SimUnit {
     return 1;
   }
 
-  getRoyalKnightChargeFlatBonus() {
-    return this.royalKnightChargeBonusTicks > 0 ? ROYAL_KNIGHT_CHARGE_FLAT_BONUS : 0;
-  }
-
   tickSpecialState(currentTick, deflectiveRechargeTicks) {
     if (this.dead) {
       return;
@@ -123,10 +134,6 @@ class SimUnit {
     if (this.hasDeflectiveArmor() && !this.deflectiveArmorCharge
       && currentTick - this.lastCombatTick >= deflectiveRechargeTicks) {
       this.deflectiveArmorCharge = true;
-    }
-
-    if (this.royalKnightChargeBonusTicks > 0) {
-      this.royalKnightChargeBonusTicks -= 1;
     }
 
     // Charge is one-time only: after first consume it never recharges.
@@ -142,7 +149,7 @@ class SimUnit {
     return true;
   }
 
-  consumeCharge(currentTick, royalKnightChargeBonusTicks) {
+  consumeCharge(currentTick) {
     if (!this.canUseCharge() || !this.chargeReady) {
       return false;
     }
@@ -150,10 +157,6 @@ class SimUnit {
     this.chargeReady = false;
     this.chargeApproachActive = false;
     this.lastCombatTick = currentTick;
-
-    if (this.isRoyalKnight() && royalKnightChargeBonusTicks > 0) {
-      this.royalKnightChargeBonusTicks = royalKnightChargeBonusTicks;
-    }
 
     return true;
   }

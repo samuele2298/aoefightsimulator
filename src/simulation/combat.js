@@ -14,17 +14,41 @@ function targetMatchesModifier(targetUnit, modifier) {
   );
 }
 
-function classBonusDamage(attackerWeapon, targetUnit) {
+function classBonusDetails(attackerWeapon, targetUnit) {
   if (!attackerWeapon || !Array.isArray(attackerWeapon.modifiers)) {
-    return 0;
+    return {
+      total: 0,
+      matched: [],
+      unmatchedCount: 0,
+    };
   }
 
-  return attackerWeapon.modifiers.reduce((sum, modifier) => {
+  const matched = [];
+  let total = 0;
+  let unmatchedCount = 0;
+
+  for (const modifier of attackerWeapon.modifiers) {
     if (targetMatchesModifier(targetUnit, modifier)) {
-      return sum + (typeof modifier.value === 'number' ? modifier.value : 0);
+      const value = typeof modifier.value === 'number' ? modifier.value : 0;
+      total += value;
+      matched.push({
+        property: modifier.property || null,
+        value,
+        effect: modifier.effect || null,
+        targetClasses: Array.isArray(modifier.target && modifier.target.class)
+          ? modifier.target.class
+          : [],
+      });
+    } else {
+      unmatchedCount += 1;
     }
-    return sum;
-  }, 0);
+  }
+
+  return {
+    total,
+    matched,
+    unmatchedCount,
+  };
 }
 
 function isCamelAuraDebuffed(attacker, enemyUnits) {
@@ -49,27 +73,60 @@ function isCamelAuraDebuffed(attacker, enemyUnits) {
 }
 
 function calculateDamage(attacker, target, context = {}) {
+  return calculateDamageDetailed(attacker, target, context).damage;
+}
+
+function calculateDamageDetailed(attacker, target, context = {}) {
   const weapon = attacker.primaryWeapon;
   if (!weapon) {
-    return 0;
+    return {
+      damage: 0,
+      breakdown: {
+        reason: 'no_weapon',
+      },
+    };
   }
 
   const baseDamage = typeof weapon.damage === 'number' ? weapon.damage : 0;
-  const bonus = classBonusDamage(weapon, target);
-  const royalKnightBonus = attacker && attacker.getRoyalKnightChargeFlatBonus
-    ? attacker.getRoyalKnightChargeFlatBonus()
+  const classBonus = classBonusDetails(weapon, target);
+  const chargeBonus = typeof context.chargeFlatBonus === 'number'
+    ? context.chargeFlatBonus
     : 0;
   const chargeMultiplier = typeof context.chargeMultiplier === 'number'
     ? context.chargeMultiplier
     : 1;
   const armorType = weapon.type === 'ranged' ? 'ranged' : 'melee';
   const armor = target.armorValue(armorType);
-  const camelPenalty = isCamelAuraDebuffed(attacker, context.enemyUnits) ? 0.8 : 1;
-  const rawDamage = (baseDamage + bonus + royalKnightBonus - armor) * camelPenalty * chargeMultiplier;
+  const camelAuraDebuffed = isCamelAuraDebuffed(attacker, context.enemyUnits);
+  const camelPenalty = camelAuraDebuffed ? 0.8 : 1;
+  const preArmorDamage = baseDamage + classBonus.total + chargeBonus;
+  const rawBeforeMultipliers = preArmorDamage - armor;
+  const rawDamage = rawBeforeMultipliers * camelPenalty * chargeMultiplier;
+  const finalDamage = Math.max(0, rawDamage);
 
-  return Math.max(0, rawDamage);
+  return {
+    damage: finalDamage,
+    breakdown: {
+      weaponType: weapon.type || 'unknown',
+      baseDamage,
+      classBonusTotal: classBonus.total,
+      classBonusMatched: classBonus.matched,
+      classBonusUnmatchedCount: classBonus.unmatchedCount,
+      chargeBonus,
+      armorType,
+      armor,
+      preArmorDamage,
+      rawBeforeMultipliers,
+      camelAuraDebuffed,
+      camelPenalty,
+      chargeMultiplier,
+      rawDamage,
+      finalDamage,
+    },
+  };
 }
 
 module.exports = {
   calculateDamage,
+  calculateDamageDetailed,
 };

@@ -1,7 +1,8 @@
 'use strict';
 
 const config = require('../../config');
-const { calculateDamage } = require('./combat');
+const logger = require('../../logger');
+const { calculateDamageDetailed } = require('./combat');
 const {
   distance,
   moveToward,
@@ -10,10 +11,8 @@ const {
 } = require('./battlefield');
 const { selectTarget: selectStraight } = require('./strategies/straightFight');
 
-const DEFLECTIVE_ARMOR_RECHARGE_TICKS = Math.round(15 / config.tickDelta);
-const ROYAL_KNIGHT_CHARGE_BONUS_TICKS = Math.round(5 / config.tickDelta);
-const LANDSKNECHT_SPLASH_RADIUS = 0.75;
-const DEFAULT_ATTACK_ANIM_SECS = 0.15;
+const DEFLECTIVE_ARMOR_RECHARGE_TICKS = Math.round(8 / config.tickDelta);
+const CHARGE_ATTACK = 3; // Only in the charge attack
 const MIN_REATTACK_SECS = 0.5;
 
 function weaponRange(unit) {
@@ -24,16 +23,121 @@ function weaponRange(unit) {
   return typeof weapon.range.max === 'number' ? weapon.range.max : 1;
 }
 
-/** Time (seconds) the unit stands frozen during an attack animation.
- * Uses weapon.speed (full attack cycle: aim+fire+reload) so the freeze
- * is always clearly visible. Falls back to DEFAULT when data is absent.
+/**
+ * Time (seconds) the unit is FROZEN during an attack: aim + windup + attack.
+ * Unit cannot move during this phase.
  */
-function getAttackAnimDuration(unit) {
+function getImmobileDuration(unit) {
   const weapon = unit.primaryWeapon;
-  if (weapon && typeof weapon.speed === 'number' && weapon.speed > 0) {
-    return weapon.speed;
+  if (weapon && weapon.durations) {
+    const d = weapon.durations;
+    return (d.aim || 0) + (d.windup || 0) + (d.attack || 0);
   }
-  return DEFAULT_ATTACK_ANIM_SECS;
+  return 0;
+}
+
+/**
+ * Time (seconds) the unit can MOVE but cannot attack: winddown + reload + setup + teardown + cooldown.
+ */
+function getRecoveryDuration(unit) {
+  const weapon = unit.primaryWeapon;
+  if (weapon && weapon.durations) {
+    const d = weapon.durations;
+    return (d.winddown || 0) + (d.reload || 0) + (d.setup || 0) + (d.teardown || 0) + (d.cooldown || 0);
+  }
+  return MIN_REATTACK_SECS;
+}
+
+function armorByType(unit) {
+  return {
+    melee: unit.armorValue('melee'),
+    ranged: unit.armorValue('ranged'),
+  };
+}
+
+function classesFor(unit) {
+  return Array.isArray(unit && unit.def && unit.def.classes) ? unit.def.classes : [];
+}
+
+function unitDebugSnapshot(unit) {
+  const weapon = unit.primaryWeapon;
+  return {
+    id: unit.id,
+    team: unit.team,
+    unitId: unit.def && unit.def.id ? unit.def.id : null,
+    name: unit.def && unit.def.name ? unit.def.name : unit.id,
+    hp: unit.hp,
+    maxHp: unit.maxHp,
+    classes: classesFor(unit),
+    movementSpeed: unit.speed,
+    armor: armorByType(unit),
+    weapon: weapon
+      ? {
+          name: weapon.name || null,
+          type: weapon.type || null,
+          damage: typeof weapon.damage === 'number' ? weapon.damage : 0,
+          speed: typeof weapon.speed === 'number' ? weapon.speed : null,
+          range: weapon.range || { min: 0, max: 1 },
+          modifiers: Array.isArray(weapon.modifiers)
+            ? weapon.modifiers.map((modifier) => ({
+                property: modifier.property || null,
+                value: typeof modifier.value === 'number' ? modifier.value : 0,
+                effect: modifier.effect || null,
+                targetClasses: modifier.target && modifier.target.class ? modifier.target.class : [],
+              }))
+            : [],
+        }
+      : null,
+    techContext: unit.def && unit.def.debugTechContext ? unit.def.debugTechContext : null,
+  };
+}
+
+function combatReasonFromBreakdown(breakdown) {
+  if (!breakdown || breakdown.reason === 'no_weapon') {
+    return 'No valid weapon: damage 0';
+  }
+
+  const bonusReasons = (breakdown.classBonusMatched || []).map((entry) => {
+    const classes = Array.isArray(entry.targetClasses)
+      ? entry.targetClasses.map((group) => Array.isArray(group) ? group.join('&') : String(group)).join(' | ')
+      : '';
+    return `+${entry.value} vs [${classes}]`;
+  });
+
+  return [
+    `base=${breakdown.baseDamage}`,
+    `bonus=${breakdown.classBonusTotal}${bonusReasons.length ? ` (${bonusReasons.join(', ')})` : ''}`,
+    `chargeBonus=${breakdown.chargeBonus}`,
+    `armor(${breakdown.armorType})=${breakdown.armor}`,
+    `camelPenalty=${breakdown.camelPenalty}`,
+    `chargeMultiplier=${breakdown.chargeMultiplier}`,
+    `raw=${breakdown.rawDamage}`,
+    `final=${breakdown.finalDamage}`,
+  ].join(' | ');
+}
+
+function emitCombatDebugLog({ tick, blocked, attacker, target, damage, breakdown }) {
+  if (!config.combatDebugLog) {
+    return;
+  }
+
+  const payload = {
+    event: 'combat_attack',
+    tick,
+    blocked,
+    attacker: unitDebugSnapshot(attacker),
+    defender: unitDebugSnapshot(target),
+    result: {
+      inflictedDamage: damage,
+      breakdown,
+      reason: blocked
+        ? 'Attack blocked by deflective armor (no HP damage)'
+        : combatReasonFromBreakdown(breakdown),
+      defenderHpAfter: target.hp,
+    },
+  };
+
+  logger.debug(`[COMBAT_DEBUG] ${JSON.stringify(payload)}`);
 }
 
 function normalizeFocusFire(focusFire) {
@@ -271,33 +375,58 @@ class SimulationEngine {
     target.registerCombat(this.tick);
 
     let chargeMultiplier = 1;
+    let chargeFlatBonus = 0;
     if (unit.chargeApproachActive && unit.consumeCharge) {
-      const consumedCharge = unit.consumeCharge(this.tick, ROYAL_KNIGHT_CHARGE_BONUS_TICKS);
+      const consumedCharge = unit.consumeCharge(this.tick);
       if (consumedCharge) {
         chargeMultiplier = unit.getChargeMultiplier ? unit.getChargeMultiplier() : 1;
+        chargeFlatBonus = CHARGE_ATTACK;
       }
     }
 
     const blocked = target.consumeDeflectiveArmor(this.tick);
 
     if (!blocked) {
-      const damage = calculateDamage(unit, target, {
+      const detailed = calculateDamageDetailed(unit, target, {
         enemyUnits: enemies,
         chargeMultiplier,
+        chargeFlatBonus,
       });
+      const damage = detailed.damage;
       target.applyDamage(damage);
+
+      emitCombatDebugLog({
+        tick: this.tick,
+        blocked: false,
+        attacker: unit,
+        target,
+        damage,
+        breakdown: detailed.breakdown,
+      });
 
       if (unit.hasClass && unit.hasClass('landsknecht') && unit.primaryWeapon && unit.primaryWeapon.type === 'melee') {
         for (const enemy of enemies) {
           if (enemy.dead || enemy.id === target.id) {
             continue;
           }
-          if (distance(target, enemy) <= LANDSKNECHT_SPLASH_RADIUS) {
+          if (distance(target, enemy) <= weaponRange(unit)) {
             enemy.applyDamage(damage);
             enemy.registerCombat(this.tick);
           }
         }
       }
+    } else {
+      emitCombatDebugLog({
+        tick: this.tick,
+        blocked: true,
+        attacker: unit,
+        target,
+        damage: 0,
+        breakdown: {
+          reason: 'deflective_armor_block',
+          chargeMultiplier,
+        },
+      });
     }
 
     const weapon = unit.primaryWeapon;
@@ -333,7 +462,8 @@ class SimulationEngine {
     if (groupState.lastAdvancedTick !== this.tick) {
       if (groupState.phase === 'firing' && this.tick >= groupState.phaseUntilTick) {
         groupState.phase = mode === 'kiting' ? 'retreat' : 'waiting';
-        groupState.phaseUntilTick = this.tick + Math.ceil(focusFire.reattackTime / config.tickDelta);
+        const recoveryDuration = getRecoveryDuration(unit);
+        groupState.phaseUntilTick = this.tick + Math.max(1, Math.ceil(recoveryDuration / config.tickDelta));
       } else if ((groupState.phase === 'retreat' || groupState.phase === 'waiting') && this.tick >= groupState.phaseUntilTick) {
         groupState.phase = 'approach';
         groupState.phaseUntilTick = 0;
@@ -392,9 +522,9 @@ class SimulationEngine {
     }
 
     if (groupState.volleyTick !== this.tick) {
-      const animDuration = getAttackAnimDuration(unit);
+      const immobileDuration = getImmobileDuration(unit);
       groupState.phase = 'firing';
-      groupState.phaseUntilTick = this.tick + Math.max(1, Math.ceil(animDuration / config.tickDelta));
+      groupState.phaseUntilTick = this.tick + Math.max(1, Math.ceil(immobileDuration / config.tickDelta));
       groupState.volleyTick = this.tick;
     }
 
@@ -409,7 +539,11 @@ class SimulationEngine {
 
   /**
    * Straight Fight – pure a-click.
-   * Move toward nearest enemy, attack when in range with normal cooldown. No stop-to-fire.
+   * Move toward nearest enemy, attack when in range.
+   * Attack cycle:
+   *   1. aim+windup+attack  → FROZEN (ATTACKING state, cannot move)
+   *   2. winddown+reload+setup+teardown+cooldown → RECOVERY (can move, cannot attack)
+   *   3. cycle complete → repeat
    */
   updateUnitStraight(unit, allies, enemies) {
     const range = weaponRange(unit);
@@ -426,6 +560,25 @@ class SimulationEngine {
     unit.targetId = target.id;
     const dist = distance(unit, target);
 
+    // Phase 1 – FROZEN: aim + windup + attack
+    if (this.tick < unit.attackAnimEndTick) {
+      unit.state = 'ATTACKING';
+      return;
+    }
+
+    // Phase 2 – RECOVERY: winddown + reload + setup + teardown + cooldown
+    if (this.tick < unit.reattackReadyTick) {
+      unit.state = 'MOVING';
+      if (dist > range) {
+        if (unit.canUseCharge && unit.canUseCharge() && unit.chargeReady) {
+          unit.chargeApproachActive = true;
+        }
+        this.moveToPoint(unit, target, allies);
+      }
+      return;
+    }
+
+    // Phase 3 – READY to attack again
     if (dist > range) {
       if (unit.canUseCharge && unit.canUseCharge() && unit.chargeReady) {
         unit.chargeApproachActive = true;
@@ -435,13 +588,11 @@ class SimulationEngine {
     } else {
       unit.state = 'ATTACKING';
       unit.chargeApproachActive = false;
-    }
-
-    unit.attackCooldown = Math.max(0, unit.attackCooldown - config.tickDelta);
-
-    if (dist <= range && unit.attackCooldown <= 0 && unit.state === 'ATTACKING') {
-      const attackRate = this.fireAttack(unit, target, enemies);
-      unit.attackCooldown = Math.max(0.2, attackRate);
+      const immobileTicks = Math.max(1, Math.ceil(getImmobileDuration(unit) / config.tickDelta));
+      const recoveryTicks = Math.max(1, Math.ceil(getRecoveryDuration(unit) / config.tickDelta));
+      unit.attackAnimEndTick = this.tick + immobileTicks;
+      unit.reattackReadyTick = this.tick + immobileTicks + recoveryTicks;
+      this.fireAttack(unit, target, enemies);
     }
   }
 

@@ -19,6 +19,8 @@ function hasTech(selectedTechs, key) {
 function cloneUnitDef(def) {
   return {
     ...def,
+    classes: Array.isArray(def.classes) ? [...def.classes] : [],
+    displayClasses: Array.isArray(def.displayClasses) ? [...def.displayClasses] : [],
     movement: def.movement ? { ...def.movement } : { speed: 1 },
     costs: def.costs ? { ...def.costs } : { food: 0, wood: 0, gold: 0, stone: 0, total: 0, popcap: 1 },
     armor: Array.isArray(def.armor) ? def.armor.map((entry) => ({ ...entry })) : [],
@@ -228,6 +230,23 @@ function applyRawEffectToUnit(def, rawEffect) {
     return;
   }
 
+  // Cantled Saddles does not increase Royal Knight's permanent melee damage.
+  // It upgrades the temporary post-charge bonus from +3 to +10.
+  if (
+    property === 'meleeAttack'
+    && effect === 'change'
+    && rawEffect.type === 'bonus'
+    && unitMatchesSelector(def, rawEffect.select)
+    && Array.isArray(rawEffect.target && rawEffect.target.class)
+    && def.id === 'royal-knight'
+  ) {
+    const amount = Number(rawEffect.value || 0);
+    if (Number.isFinite(amount) && amount > 0) {
+      def.chargeBonusDamage = amount;
+    }
+    return;
+  }
+
   const value = rawEffect.value;
   switch (property) {
     case 'hitpoints':
@@ -336,6 +355,16 @@ function applyTechTreeToUnitDef(def, selectedTechs = [], context = {}) {
       if (isRangedWeapon(weapon)) {
         weapon.speed = Math.max(0.2, weapon.speed * 0.85);
       }
+    }
+  }
+
+  // Custom Sengoku tech: grants deflective_armor to samurai units that don't
+  // have it by default (stripped during normalisation for the 'sen' civilisation).
+  if (hasTech(selectedTechs, 'sengoku-deflective-armor')) {
+    const isSengokuSamurai = unitHasClass(next, 'samurai_jpn')
+      || unitHasClass(next, 'daimyo_retainer');
+    if (isSengokuSamurai && !next.classes.includes('deflective_armor')) {
+      next.classes.push('deflective_armor');
     }
   }
 

@@ -1,8 +1,10 @@
 'use strict';
 
 const config = {
-  port: parseInt(process.env.PORT || '4000', 10),
+  port: process.env.PORT || '4000',
   nodeEnv: process.env.NODE_ENV || 'development',
+  log_level: process.env.LOG_LEVEL || 'debug',
+  combatDebugLog: true,
 
   // Simulation
   tickDelta: 0.1,          // simulated seconds per tick
