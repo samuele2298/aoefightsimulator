@@ -118,6 +118,16 @@ function unitMatchesSelector(def, select) {
   return idMatches || classMatches;
 }
 
+function hasExplicitSelector(select) {
+  if (!select || typeof select !== 'object') {
+    return false;
+  }
+
+  const hasId = Array.isArray(select.id) && select.id.length > 0;
+  const hasClass = Array.isArray(select.class) && select.class.length > 0;
+  return hasId || hasClass;
+}
+
 function applyArmorEffect(def, armorType, effect, value) {
   const amount = Number(value || 0);
   if (!Number.isFinite(amount) || amount === 0) {
@@ -219,6 +229,31 @@ function applyRangeEffect(def, effect, value) {
   }
 }
 
+function applyUnknownEffectToUnit(def, rawEffect) {
+  const techId = String(rawEffect && rawEffect._techId ? rawEffect._techId : '').toLowerCase();
+  const amount = Number(rawEffect && rawEffect.value);
+  if (!Number.isFinite(amount)) {
+    return;
+  }
+
+  // OTD Meinwerk unique: Golden Cuirass. In data it is encoded as property
+  // "unknown" + multiply 0.8 on Gilded Man-at-Arms. Model it as reduced
+  // incoming damage.
+  if (techId === 'golden-cuirass' && amount > 0) {
+    const current = Number.isFinite(def.incomingDamageMultiplier)
+      ? def.incomingDamageMultiplier
+      : 1;
+    def.incomingDamageMultiplier = roundStat(current * amount);
+    return;
+  }
+
+  // OTD Meinwerk unique: Zornhau. Data encodes this as unknown ability with
+  // +2 value for Gilded Landsknecht. Model it as flat melee damage increase.
+  if (techId === 'zornhau') {
+    applyAttackEffect(def, isMeleeWeapon, 'change', amount);
+  }
+}
+
 function applyRawEffectToUnit(def, rawEffect) {
   if (!rawEffect || typeof rawEffect !== 'object') {
     return;
@@ -277,6 +312,9 @@ function applyRawEffectToUnit(def, rawEffect) {
     case 'maxRange':
       applyRangeEffect(def, effect, value);
       break;
+    case 'unknown':
+      applyUnknownEffectToUnit(def, rawEffect);
+      break;
     default:
       break;
   }
@@ -301,10 +339,12 @@ function applyTechTreeToUnitDef(def, selectedTechs = [], context = {}) {
     for (const tech of rawTechs) {
       const effects = Array.isArray(tech.effects) ? tech.effects : [];
       for (const rawEffect of effects) {
-        if (!unitMatchesSelector(baseOnly, rawEffect.select)) {
+        const effectWithSource = { ...rawEffect, _techId: tech.id };
+        const hasSelector = hasExplicitSelector(rawEffect.select);
+        if (hasSelector && !unitMatchesSelector(baseOnly, rawEffect.select)) {
           continue;
         }
-        applyRawEffectToUnit(baseOnly, rawEffect);
+        applyRawEffectToUnit(baseOnly, effectWithSource);
       }
     }
 
@@ -374,10 +414,12 @@ function applyTechTreeToUnitDef(def, selectedTechs = [], context = {}) {
   for (const tech of rawTechs) {
     const effects = Array.isArray(tech.effects) ? tech.effects : [];
     for (const rawEffect of effects) {
-      if (!unitMatchesSelector(next, rawEffect.select)) {
+      const effectWithSource = { ...rawEffect, _techId: tech.id };
+      const hasSelector = hasExplicitSelector(rawEffect.select);
+      if (hasSelector && !unitMatchesSelector(next, rawEffect.select)) {
         continue;
       }
-      applyRawEffectToUnit(next, rawEffect);
+      applyRawEffectToUnit(next, effectWithSource);
     }
   }
 

@@ -99,10 +99,13 @@ function calculateDamageDetailed(attacker, target, context = {}) {
   const armor = target.armorValue(armorType);
   const camelAuraDebuffed = isCamelAuraDebuffed(attacker, context.enemyUnits);
   const camelPenalty = camelAuraDebuffed ? 0.8 : 1;
+  const incomingDamageMultiplier = Number.isFinite(target && target.def && target.def.incomingDamageMultiplier)
+    ? Math.max(0, target.def.incomingDamageMultiplier)
+    : 1;
   const preArmorDamage = baseDamage + classBonus.total + chargeBonus;
   const rawBeforeMultipliers = preArmorDamage - armor;
   const rawDamage = rawBeforeMultipliers * camelPenalty * chargeMultiplier;
-  const finalDamage = Math.max(0, rawDamage);
+  const finalDamage = Math.max(0, rawDamage * incomingDamageMultiplier);
 
   return {
     damage: finalDamage,
@@ -120,6 +123,7 @@ function calculateDamageDetailed(attacker, target, context = {}) {
       camelAuraDebuffed,
       camelPenalty,
       chargeMultiplier,
+      incomingDamageMultiplier,
       rawDamage,
       finalDamage,
     },

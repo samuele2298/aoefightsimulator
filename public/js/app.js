@@ -4,6 +4,7 @@ import { createBattlefieldRenderer } from './battlefield2d.js';
 
 const SIM_SECONDS_PER_TICK = 0.1;
 const INITIAL_BATTLEFIELD_ZOOM = 2.5;
+const DEFAULT_PLAYBACK_SPEED = 0.5;
 
 function mean(values) {
   if (!values.length) {
@@ -43,7 +44,7 @@ function stdDev(values) {
 
 function fmtNumber(value, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
-    return 'n.d.';
+    return 'n/a';
   }
   return Number(value).toFixed(digits);
 }
@@ -54,7 +55,7 @@ function fmtPct(value) {
 
 function formatSimSeconds(ticks) {
   if (ticks === null || ticks === undefined || Number.isNaN(Number(ticks))) {
-    return 'n.d.';
+    return 'n/a';
   }
 
   return `${fmtNumber(Number(ticks) * SIM_SECONDS_PER_TICK, 1)} s`;
@@ -275,7 +276,7 @@ function buildAnalyticsModel({ snapshots, result, config, obstacles, batchStats 
       ],
       note: batchStats
         ? `Tech uplift (MC): A ${fmtNumber(batchStats.techUpliftA, 2)} | B ${fmtNumber(batchStats.techUpliftB, 2)} ; Marginal gain avg: A ${fmtNumber(batchStats.marginalA, 2)} | B ${fmtNumber(batchStats.marginalB, 2)}`
-        : 'Batch MC in corso per uplift tech / gain marginale...',
+        : 'MC batch running for tech uplift / marginal gain...',
     },
     {
       title: 'Formation & Environment',
@@ -289,7 +290,7 @@ function buildAnalyticsModel({ snapshots, result, config, obstacles, batchStats 
       ],
       note: batchStats
         ? `Map sensitivity (MC win delta): ${fmtNumber(batchStats.mapSensitivity, 2)} | Formation delta: ${fmtNumber(batchStats.formationDelta, 2)}`
-        : 'Map sensitivity e delta formazione saranno aggiornati con il batch statistico.',
+        : 'Map sensitivity and formation delta will be updated by the statistical batch.',
     },
     {
       title: 'Statistical View',
@@ -298,12 +299,12 @@ function buildAnalyticsModel({ snapshots, result, config, obstacles, batchStats 
         { key: 'Resource Diff Median', value: fmtNumber(median(resourceDiffSeries), 2) },
         { key: 'Resource Diff P10/P90', value: `${fmtNumber(percentile(resourceDiffSeries, 10), 2)} / ${fmtNumber(percentile(resourceDiffSeries, 90), 2)}` },
         { key: 'Volatility (StdDev)', value: fmtNumber(stdevDiff, 2) },
-        { key: '95% CI (single run)', value: 'richiede batch MC' },
+        { key: '95% CI (single run)', value: 'requires MC batch' },
         { key: 'Effect Size proxy', value: fmtNumber(stdevDiff > 0 ? avgDiff / stdevDiff : 0, 2) },
       ],
       note: batchStats
         ? `Monte Carlo ${batchStats.runs} run | win A ${fmtPct(batchStats.winRateA)} | win B ${fmtPct(100 - batchStats.winRateA)} | CI95 +/- ${fmtNumber(batchStats.ci95, 2)}`
-        : 'CI e robustezza vengono calcolate nel batch Monte Carlo.',
+        : 'CI and robustness are computed in the Monte Carlo batch.',
     },
   ];
 
@@ -316,7 +317,7 @@ function renderAnalytics(root, cards) {
   }
   root.innerHTML = cards.length
     ? renderAnalyticsCards(cards)
-    : '<div class="analytics-empty">Avvia una simulazione per vedere il pannello completo.</div>';
+    : '<div class="analytics-empty">Start a simulation to see the full panel.</div>';
 }
 
 async function postJson(url, body) {
@@ -363,7 +364,7 @@ function openWs(onMessage, onStatus) {
 function createReplayController({ battlefield, chart, ui, setPlaybackButtonState }) {
   const replay = {
     snapshots: [],
-    speed: 1,
+    speed: DEFAULT_PLAYBACK_SPEED,
     currentIndex: 0,
     playing: false,
     recording: false,
@@ -412,7 +413,7 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
 
       if (nextIndex >= replay.snapshots.length - 1) {
         stopLoop();
-        ui.setPlaybackInfo(`Replay completato | ${replay.snapshots.length} frame`);
+        ui.setPlaybackInfo(`Replay complete | ${replay.snapshots.length} frames`);
         return;
       }
     }
@@ -428,7 +429,7 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
       replay.lastFrameTime = 0;
       replay.recording = true;
       chart.reset();
-      ui.setPlaybackInfo('Download simulazione in RAM...');
+      ui.setPlaybackInfo('Downloading simulation into RAM...');
     },
     pushSnapshot(snapshot) {
       replay.snapshots.push(snapshot);
@@ -445,14 +446,14 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
       if (replay.snapshots.length > 0) {
         renderSnapshot(0);
       }
-      replay.speed = 1;
-      ui.setPlaybackInfo(`Precaricata in RAM: ${replay.snapshots.length} frame.`);
+      replay.speed = DEFAULT_PLAYBACK_SPEED;
+      ui.setPlaybackInfo(`Preloaded in RAM: ${replay.snapshots.length} frames.`);
       if (autoPlay && replay.snapshots.length > 0) {
         replay.playing = true;
         setPlaybackButtonState(true);
         replay.lastFrameTime = 0;
         replay.rafId = requestAnimationFrame(loop);
-        ui.setPlaybackInfo('Replay avviato in automatico a x1');
+        ui.setPlaybackInfo(`Replay auto-started at x${DEFAULT_PLAYBACK_SPEED}`);
       }
     },
     togglePlay() {
@@ -462,7 +463,7 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
 
       if (replay.playing) {
         stopLoop();
-        ui.setPlaybackInfo(`Replay in pausa | frame ${replay.currentIndex + 1}/${replay.snapshots.length}`);
+        ui.setPlaybackInfo(`Replay paused | frame ${replay.currentIndex + 1}/${replay.snapshots.length}`);
         return;
       }
 
@@ -475,7 +476,7 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
       setPlaybackButtonState(true);
       replay.lastFrameTime = 0;
       replay.rafId = requestAnimationFrame(loop);
-      ui.setPlaybackInfo(`Replay in esecuzione | Speed x${replay.speed}`);
+      ui.setPlaybackInfo(`Replay playing | Speed x${replay.speed}`);
     },
     restart() {
       if (!replay.snapshots.length) {
@@ -483,14 +484,14 @@ function createReplayController({ battlefield, chart, ui, setPlaybackButtonState
       }
       stopLoop();
       renderSnapshot(0);
-      ui.setPlaybackInfo('Replay riportato all\'inizio');
+      ui.setPlaybackInfo('Replay reset to start');
     },
     setSpeed(speed) {
       replay.speed = speed;
       ui.setPlaybackInfo(
         replay.recording
-          ? `Recording live | speed replay impostata a x${speed}`
-          : `Replay pronto | speed x${speed}`
+          ? `Live recording | replay speed set to x${speed}`
+          : `Replay ready | speed x${speed}`
       );
     },
     getSnapshots() {
@@ -572,7 +573,7 @@ async function main() {
 
   function activateSpeedButton(speed) {
     for (const current of ui.getSpeedButtons()) {
-      current.classList.toggle('is-active', Number(current.dataset.speed || 1) === speed);
+      current.classList.toggle('is-active', Number(current.dataset.speed || DEFAULT_PLAYBACK_SPEED) === speed);
     }
   }
 
@@ -601,12 +602,12 @@ async function main() {
       battlefield.setMapSize(preview.mapSize || { width: 120, height: 72 });
       battlefield.setObstacles(preview.obstacles || []);
       if (!preview.obstacles || preview.obstacles.length === 0) {
-        ui.setPlaybackInfo('Nessun ostacolo nel preset selezionato');
+        ui.setPlaybackInfo('No obstacles in the selected preset');
       } else {
-        ui.setPlaybackInfo(`Preview ambiente: ${preview.environment} | ostacoli: ${preview.obstacles.length} | seed: ${preview.seed}`);
+        ui.setPlaybackInfo(`Environment preview: ${preview.environment} | obstacles: ${preview.obstacles.length} | seed: ${preview.seed}`);
       }
     } catch (error) {
-      ui.setPlaybackInfo(`Preview ambiente fallita: ${error.message}`);
+      ui.setPlaybackInfo(`Environment preview failed: ${error.message}`);
     }
   }
 
@@ -638,9 +639,9 @@ async function main() {
       activeConfig = message.payload.config || activeConfig;
       batchStats = null;
       renderAnalytics(advancedAnalyticsRoot, []);
-      replay.setSpeed(1);
-      activateSpeedButton(1);
-      ui.setResult('Simulazione in corso: i frame vengono salvati in RAM...');
+      replay.setSpeed(DEFAULT_PLAYBACK_SPEED);
+      activateSpeedButton(DEFAULT_PLAYBACK_SPEED);
+      ui.setResult('Simulation in progress: frames are being saved in RAM...');
       ui.setStatus('Simulation started');
       return;
     }
@@ -654,21 +655,21 @@ async function main() {
 
     if (message.type === 'sim:end') {
       replay.finishRecording({ autoPlay: true });
-      activateSpeedButton(1);
+      activateSpeedButton(DEFAULT_PLAYBACK_SPEED);
       ui.setResult(buildResultDisplay(message.payload || {}));
       updateAnalytics(message.payload || {});
       ui.setStatus('Simulation ended');
 
       if (activeConfig) {
-        ui.setPlaybackInfo('Calcolo batch statistico avanzato in corso...');
+        ui.setPlaybackInfo('Computing advanced statistical batch...');
         computeBatchStats(activeConfig)
           .then((stats) => {
             batchStats = stats;
             updateAnalytics(message.payload || {});
-            ui.setPlaybackInfo(`Batch statistico pronto (${stats.runs} run baseline)`);
+            ui.setPlaybackInfo(`Statistical batch ready (${stats.runs} baseline runs)`);
           })
           .catch((error) => {
-            ui.setPlaybackInfo(`Batch statistico fallito: ${error.message}`);
+            ui.setPlaybackInfo(`Statistical batch failed: ${error.message}`);
           });
       }
       return;
@@ -704,7 +705,7 @@ async function main() {
 
   for (const button of ui.getSpeedButtons()) {
     button.addEventListener('click', () => {
-      const selected = Number(button.dataset.speed || 1);
+      const selected = Number(button.dataset.speed || DEFAULT_PLAYBACK_SPEED);
       activateSpeedButton(selected);
       replay.setSpeed(selected);
     });

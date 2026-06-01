@@ -183,6 +183,7 @@ h2 {
   display: grid;
   grid-template-rows: 1fr auto;
   gap: 8px;
+  min-width: 0;
 }
 
 .battlefield-wrap,
@@ -193,6 +194,11 @@ h2 {
   border-radius: 10px;
   background: linear-gradient(180deg, rgba(24, 33, 49, 0.92) 0%, rgba(14, 21, 31, 0.95) 100%);
   padding: 10px;
+}
+
+.battlefield-wrap {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .battlefield-wrap h2,
@@ -529,6 +535,7 @@ input[type='number'] {
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
+  margin-top: 8px;
 }
 
 .team-tech-row .btn {
@@ -568,9 +575,11 @@ input[type='number'] {
 }
 
 #battlefield {
+  display: block;
   width: 100%;
   max-width: 100%;
-  min-height: 700px;
+  height: clamp(380px, 62vh, 760px);
+  min-height: 0;
   border-radius: 8px;
   border: 1px solid #415573;
   background: transparent;
@@ -666,6 +675,35 @@ input[type='number'] {
 .tech-option-title {
   color: var(--text);
   font-size: 0.92rem;
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 7px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid #506282;
+  font-size: 0.66rem;
+  letter-spacing: 0.2px;
+}
+
+.source-badge.source-landmark {
+  border-color: rgba(103, 188, 120, 0.62);
+  color: #8fe3a0;
+  background: rgba(54, 109, 65, 0.22);
+}
+
+.source-badge.source-unit {
+  border-color: rgba(156, 117, 225, 0.60);
+  color: #cdb6ff;
+  background: rgba(89, 60, 140, 0.26);
+}
+
+.source-badge.source-generic {
+  border-color: rgba(154, 165, 180, 0.52);
+  color: #d5dbe5;
+  background: rgba(73, 82, 96, 0.30);
 }
 
 .tech-option-meta {
@@ -874,7 +912,7 @@ input[type='number'] {
   }
 
   #battlefield {
-    min-height: 460px;
+    height: clamp(300px, 50vh, 520px);
   }
 
   .replay-actions {

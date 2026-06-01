@@ -1,39 +1,39 @@
 # AoE4 Fight Simulator
 
-Node.js + Express + WebSocket simulator per fight di Age of Empires 4.
+Node.js + Express + WebSocket simulator for Age of Empires 4 fights.
 
 ## Features
 
-- Engine di simulazione fight 2D semplificata (melee/ranged, range, cooldown, chaos).
-- Strategie:
+- Simplified 2D fight simulation engine (melee/ranged, range, cooldown, chaos).
+- Strategies:
   - `straight`
-  - `kiting` (solo ranged)
+  - `kiting` (ranged only)
   - `focus_fire` (target class priority)
-- Ambienti:
+- Environments:
   - `open`
-  - `natural` (ostacoli)
-  - `tower`, `castle`, `tc` (strutture garrisonate che sparano)
-- Dati da `aoe4data` (`github:aoe4world/data`) con refresh runtime.
-- UI dark con:
-  - Battlefield 2D live (icone unità + HP bars)
-  - Legenda live per team (icona + nome + vivi)
-  - Grafico risorse in tempo reale
-  - Monte Carlo mode con grafici winrate e trade ratio
-- Preset iniziale automatico e modificabile.
+  - `natural` (obstacles)
+  - `tower`, `castle`, `tc` (garrisoned structures that fire)
+- Data from `aoe4data` (`github:aoe4world/data`) with runtime refresh.
+- Dark UI with:
+  - Live 2D battlefield (unit icons + HP bars)
+  - Live team legend (icon + name + alive)
+  - Real-time resource chart
+  - Monte Carlo mode with win rate and trade ratio charts
+- Automatic default preset, fully editable.
 
-## Requisiti
+## Requirements
 
 - Node.js 20+
 - npm 10+
 
-## Installazione
+## Installation
 
 ```bash
 npm install
 npm install github:aoe4world/data
 ```
 
-## Avvio
+## Start
 
 ```bash
 npm run dev
@@ -41,18 +41,18 @@ npm run dev
 
 Server default: `http://localhost:3000`
 
-## Utilizzo UI
+## UI Usage
 
-1. Scegli civiltà e età per Team A e Team B.
-2. Aggiungi unità dal selector (il selector mostra solo unità valide per la civ/età scelte).
-3. Scegli formazione, strategia e ambiente.
-4. Click `Start Simulation` per singolo fight live via WebSocket.
-5. Click `Run Monte Carlo` per N run aggregate (campo `Monte Carlo Runs`).
-6. `Load Preset` ricarica un setup iniziale veloce, poi puoi modificarlo liberamente.
+1. Choose civilization and age for Team A and Team B.
+2. Add units from the selector (it only shows units valid for the selected civ/age).
+3. Choose formation, strategy, and environment.
+4. Click `Start Simulation` for a single live fight via WebSocket.
+5. Click `Run Monte Carlo` for aggregated N runs (`Monte Carlo Runs` field).
+6. `Load Preset` loads a quick default setup that you can freely modify.
 
-## Nota su unità civ-specifiche
+## Note On Civ-Specific Units
 
-Le unità sono filtrate per civiltà/età; unità base possono essere sostituite da varianti civ-specifiche (esempio classico: English con `longbowman` al posto dell'arciere base). Per questo il picker UI è sempre il riferimento corretto.
+Units are filtered by civilization/age; base units may be replaced by civ-specific variants (classic example: English with `longbowman` instead of the base archer). For this reason, the UI picker is always the correct reference.
 
 ## API
 
@@ -73,7 +73,7 @@ Le unità sono filtrate per civiltà/età; unità base possono essere sostituite
 - `GET /api/simulation/result`
 - `POST /api/simulation/monte-carlo`
 
-## Esempio payload start
+## Example Start Payload
 
 ```json
 {
@@ -106,7 +106,7 @@ Le unità sono filtrate per civiltà/età; unità base possono essere sostituite
 
 Endpoint: `ws://localhost:3000/ws`
 
-Eventi server:
+Server events:
 
 - `ws:ready`
 - `sim:start`
@@ -116,7 +116,7 @@ Eventi server:
 
 ## Config
 
-Parametri principali in `config.js`:
+Main parameters in `config.js`:
 
 - `tickDelta`
 - `maxTicks`
@@ -126,6 +126,6 @@ Parametri principali in `config.js`:
 
 ## Troubleshooting
 
-- Se la simulazione non parte: controlla che entrambi i team abbiano almeno una unità valida.
-- Se mancano icone: verifica route statica `/data/images/units/*` e presenza `node_modules/aoe4data/images/units`.
-- Dopo update dati: usa `POST /api/data/refresh`.
+- If the simulation does not start: check that both teams have at least one valid unit.
+- If icons are missing: verify static route `/data/images/units/*` and `node_modules/aoe4data/images/units` exists.
+- After data updates: use `POST /api/data/refresh`.

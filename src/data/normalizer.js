@@ -7,6 +7,8 @@ const EXCLUDED_TECH_IDS = new Set([
   'greased-axles-improved',
   'siege-works',
   'siege-works-improved',
+  'siege-engineering',
+  'siege-engineering-improved',
 ]);
 
 function isExcludedTechnologyId(id) {

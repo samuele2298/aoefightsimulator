@@ -41,6 +41,15 @@ const CIV_BANNER_ALIASES = {
   zx: 'zhuxi',
 };
 
+const LANDMARK_BUILDING_IDS = new Set([
+  'meinwerk-palace',
+  'house-of-learning',
+  'tughlaqabad-fort',
+  'lancaster-castle',
+  'golden-tent',
+  'house-of-lancaster',
+]);
+
 const TECH_TREE_OPTIONS = [
   {
     key: 'melee-attack-1',
@@ -48,7 +57,7 @@ const TECH_TREE_OPTIONS = [
     group: 'Melee Attack',
     minAge: 1,
     requiresAnyTechIds: ['bloomery', 'tatara'],
-    shortDescription: '+1 danno melee',
+    shortDescription: '+1 melee damage',
   },
   {
     key: 'melee-attack-2',
@@ -56,7 +65,7 @@ const TECH_TREE_OPTIONS = [
     group: 'Melee Attack',
     minAge: 2,
     requiresAnyTechIds: ['decarbonization', 'hizukuri'],
-    shortDescription: '+1 danno melee',
+    shortDescription: '+1 melee damage',
   },
   {
     key: 'melee-attack-3',
@@ -64,7 +73,7 @@ const TECH_TREE_OPTIONS = [
     group: 'Melee Attack',
     minAge: 3,
     requiresAnyTechIds: ['damascus-steel', 'kobuse-gitae'],
-    shortDescription: '+1 danno melee',
+    shortDescription: '+1 melee damage',
   },
   {
     key: 'melee-attack-4',
@@ -72,7 +81,7 @@ const TECH_TREE_OPTIONS = [
     group: 'Melee Attack',
     minAge: 4,
     requiresAnyTechIds: ['yaki-ire'],
-    shortDescription: '+1 danno melee',
+    shortDescription: '+1 melee damage',
   },
   {
     key: 'melee-defense-1',
@@ -104,7 +113,7 @@ const TECH_TREE_OPTIONS = [
     group: 'Ranged Attack',
     minAge: 2,
     requiresAnyTechIds: ['steeled-arrow'],
-    shortDescription: '+1 danno archi e balestre',
+    shortDescription: '+1 bow and crossbow damage',
   },
   {
     key: 'ranged-attack-2',
@@ -112,7 +121,7 @@ const TECH_TREE_OPTIONS = [
     group: 'Ranged Attack',
     minAge: 3,
     requiresAnyTechIds: ['balanced-projectiles'],
-    shortDescription: '+1 danno archi e balestre',
+    shortDescription: '+1 bow and crossbow damage',
   },
   {
     key: 'ranged-attack-3',
@@ -120,7 +129,7 @@ const TECH_TREE_OPTIONS = [
     group: 'Ranged Attack',
     minAge: 4,
     requiresAnyTechIds: ['platecutter-point'],
-    shortDescription: '+1 danno archi e balestre',
+    shortDescription: '+1 bow and crossbow damage',
   },
   {
     key: 'ranged-defense-1',
@@ -152,7 +161,7 @@ const TECH_TREE_OPTIONS = [
     group: 'University',
     minAge: 4,
     requiresAnyTechIds: ['incendiary-arrows'],
-    shortDescription: '+20% danno ranged non-gunpowder',
+    shortDescription: '+20% non-gunpowder ranged damage',
   },
   {
     key: 'university-cavalry-biology',
@@ -160,7 +169,7 @@ const TECH_TREE_OPTIONS = [
     group: 'University',
     minAge: 4,
     requiresAnyTechIds: ['biology', 'royal-bloodlines'],
-    shortDescription: '+25% HP cavalleria',
+    shortDescription: '+25% cavalry HP',
   },
   {
     key: 'university-elite-army-tactics',
@@ -168,7 +177,7 @@ const TECH_TREE_OPTIONS = [
     group: 'University',
     minAge: 4,
     requiresAnyTechIds: ['elite-army-tactics'],
-    shortDescription: '+15% HP e danno fanteria melee',
+    shortDescription: '+15% melee infantry HP and damage',
   },
   {
     key: 'university-archer-speed',
@@ -376,7 +385,7 @@ function isBannedUnit(unit) {
 
   const navalPattern = /\b(ship|boat|naval|war\s*cog|hulk|galley|demolition\s*ship|dhow|junk|fishing|transport)\b/;
   const siegePattern = /\b(siege|mangonel|trebuchet|bombard|springald|ribauldequin|culverin|traction\s*trebuchet|nest\s*of\s*bees|great\s*bombard|cannon|battering\s*ram)\b/;
-  const bannedPattern = /\b(villager|scout|king|battering\s*ram|demolition\s*ship|galley|hulk)\b/;
+  const bannedPattern = /\b(villager|scout|king|battering\s*ram|demolition\s*ship|galley|hulk|monk|imam|priest|dervish)\b/;
 
   return (
     bannedPattern.test(id) ||
@@ -450,8 +459,8 @@ function resolveTechTreeOptions(team) {
       label: resolvedLabel,
       available: (age >= resolvedMinAge) && availableByCiv,
       reason: !availableByAge
-        ? `Richiede Eta ${resolvedMinAge}`
-        : (!availableByCiv ? 'Non disponibile per questa civilta' : ''),
+        ? `Requires Age ${resolvedMinAge}`
+        : (!availableByCiv ? 'Not available for this civilization' : ''),
     };
   });
 }
@@ -476,8 +485,8 @@ function updateTechSummary(team) {
   const el = teamElements(team);
   const selectedCount = state.selectedTechs[team].length;
   el.techSummary.textContent = selectedCount > 0
-    ? `${selectedCount} tech selezionate`
-    : 'Nessuna tech selezionata';
+    ? `${selectedCount} techs selected`
+    : 'No tech selected';
 }
 
 function renderTeamTechDialog(team) {
@@ -505,11 +514,11 @@ function renderTeamTechDialog(team) {
 
     const meta = document.createElement('div');
     meta.className = 'tech-option-meta';
-    meta.textContent = `${option.group} | Eta ${option.minAge}${option.reason ? ` | ${option.reason}` : ''}`;
+    meta.textContent = `${option.group} | Age ${option.minAge}${option.reason ? ` | ${option.reason}` : ''}`;
 
     const description = document.createElement('div');
     description.className = 'tech-option-meta';
-    description.textContent = option.shortDescription || 'Effetto applicato in simulazione';
+    description.textContent = option.shortDescription || 'Effect applied in simulation';
 
     textWrap.appendChild(title);
     textWrap.appendChild(meta);
@@ -606,6 +615,24 @@ function techTextMentionsUnit(tech, unit) {
   return unitAliases.some((alias) => text.includes(alias));
 }
 
+function classifyTechSource(tech) {
+  const producedBy = Array.isArray(tech && tech.producedBy) ? tech.producedBy : [];
+  if (producedBy.some((buildingId) => LANDMARK_BUILDING_IDS.has(String(buildingId || '').toLowerCase()))) {
+    return { type: 'landmark', label: 'Landmark' };
+  }
+
+  return { type: 'unit', label: 'Unit tech' };
+}
+
+function isLikelyCombatAbilityTechWithoutEffects(tech, unitDef) {
+  if (!techTextMentionsUnit(tech, unitDef)) {
+    return false;
+  }
+
+  const text = `${tech.name || ''} ${tech.description || ''}`.toLowerCase();
+  return /ability|bonus|damage|armor|attack|charge|deflect|melee|ranged|speed|hp|health|yeomen|landsknecht|man-at-arms|knight/.test(text);
+}
+
 function isCombatRelevantUnitEffect(effect) {
   const property = String(effect && effect.property ? effect.property : '').toLowerCase();
   return [
@@ -619,6 +646,7 @@ function isCombatRelevantUnitEffect(effect) {
     'attack',
     'attackspeed',
     'maxrange',
+    'unknown',
   ].includes(property);
 }
 
@@ -642,7 +670,7 @@ function resolveUnitTechOptionsForUnit(team, unitDef) {
       const effects = Array.isArray(tech.effects) ? tech.effects : [];
       const combatEffects = effects.filter((effect) => isCombatRelevantUnitEffect(effect));
       if (!combatEffects.length) {
-        return false;
+        return isLikelyCombatAbilityTechWithoutEffects(tech, unitDef);
       }
 
       const targetsBySelector = combatEffects.some((effect) => effectTargetsUnit(effect, unitDef));
@@ -660,10 +688,18 @@ function resolveUnitTechOptionsForUnit(team, unitDef) {
     .map((tech) => {
       const minAge = typeof tech.age === 'number' ? tech.age : 1;
       const available = age >= minAge;
+      const source = classifyTechSource(tech);
+      const hasCombatEffects = Array.isArray(tech.effects)
+        && tech.effects.some((effect) => isCombatRelevantUnitEffect(effect));
       return {
         ...tech,
+        sourceType: source.type,
+        sourceLabel: source.label,
+        hasCombatEffects,
         available,
-        reason: available ? '' : `Richiede Eta ${minAge}`,
+        reason: available
+          ? (!hasCombatEffects ? 'Special effect not fully modeled' : '')
+          : `Requires Age ${minAge}`,
       };
     })
     .sort((a, b) => {
@@ -726,6 +762,8 @@ function renderActiveUnitTechDialog() {
   const chargeInput = byId('unit-tech-item-charge-active');
   const deflectiveWrap = byId('unit-tech-item-deflective-wrap');
   const deflectiveInput = byId('unit-tech-item-deflective-active');
+  const paviseWrap = byId('unit-tech-item-pavise-wrap');
+  const paviseInput = byId('unit-tech-item-pavise-active');
   if (!titleEl || !optionsWrap) {
     return;
   }
@@ -738,6 +776,10 @@ function renderActiveUnitTechDialog() {
   if (deflectiveWrap && deflectiveInput) {
     deflectiveWrap.hidden = !context.supportsDeflectiveArmorToggle;
     deflectiveInput.checked = context.deflectiveArmorEnabled;
+  }
+  if (paviseWrap && paviseInput) {
+    paviseWrap.hidden = !context.supportsPaviseToggle;
+    paviseInput.checked = context.paviseEnabled;
   }
   optionsWrap.innerHTML = '';
 
@@ -757,13 +799,18 @@ function renderActiveUnitTechDialog() {
     title.className = 'tech-option-title';
     title.textContent = option.name || option.id;
 
+    const sourceBadge = document.createElement('span');
+    sourceBadge.className = `source-badge source-${option.sourceType || 'unit'}`;
+    sourceBadge.textContent = option.sourceLabel || 'Unit tech';
+    title.appendChild(sourceBadge);
+
     const meta = document.createElement('div');
     meta.className = 'tech-option-meta';
-    meta.textContent = `Eta ${option.age || 1}${option.reason ? ` | ${option.reason}` : ''}`;
+    meta.textContent = `Age ${option.age || 1}${option.reason ? ` | ${option.reason}` : ''}`;
 
     const description = document.createElement('div');
     description.className = 'tech-option-meta';
-    description.textContent = option.description || 'Effetto tech specifico unita';
+    description.textContent = option.description || 'Unit-specific tech effect';
 
     textWrap.appendChild(title);
     textWrap.appendChild(meta);
@@ -784,7 +831,8 @@ function openUnitTechDialogForItem(team, item, unitDef) {
   const options = resolveUnitTechOptionsForUnit(team, unitDef);
   const supportsChargeToggle = unitCanConfigureCharge(unitDef);
   const supportsDeflectiveArmorToggle = unitCanConfigureDeflectiveArmor(unitDef);
-  if (!options.length && !supportsChargeToggle && !supportsDeflectiveArmorToggle) {
+  const supportsPaviseToggle = unitCanConfigurePavise(unitDef);
+  if (!options.length && !supportsChargeToggle && !supportsDeflectiveArmorToggle && !supportsPaviseToggle) {
     return;
   }
 
@@ -797,8 +845,10 @@ function openUnitTechDialogForItem(team, item, unitDef) {
     unitName: item.name,
     supportsChargeToggle,
     supportsDeflectiveArmorToggle,
+    supportsPaviseToggle,
     chargeEnabled: item.chargeEnabled !== false,
     deflectiveArmorEnabled: item.deflectiveArmorEnabled !== false,
+    paviseEnabled: item.paviseEnabled !== false,
   };
 
   renderActiveUnitTechDialog();
@@ -828,6 +878,7 @@ function bindUnitTechDialogHandlers() {
   const optionsWrap = byId('unit-tech-item-options');
   const chargeInput = byId('unit-tech-item-charge-active');
   const deflectiveInput = byId('unit-tech-item-deflective-active');
+  const paviseInput = byId('unit-tech-item-pavise-active');
 
   if (!dialog || !clearBtn || !selectAllBtn || !applyBtn || !optionsWrap) {
     return;
@@ -872,6 +923,9 @@ function bindUnitTechDialogHandlers() {
     if (deflectiveInput && state.activeUnitTechDialog.supportsDeflectiveArmorToggle) {
       item.deflectiveArmorEnabled = Boolean(deflectiveInput.checked);
     }
+    if (paviseInput && state.activeUnitTechDialog.supportsPaviseToggle) {
+      item.paviseEnabled = Boolean(paviseInput.checked);
+    }
     dialog.close();
     state.activeUnitTechDialog = null;
     renderUnitList(team);
@@ -897,7 +951,7 @@ function openUnitStratDialogForItem(team, item, unitDef) {
   // Populate title
   const titleEl = byId('unit-strat-title');
   if (titleEl) {
-    titleEl.textContent = `${item.name} – Strategia`;
+    titleEl.textContent = `${item.name} - Strategy`;
   }
 
   // Populate strategy type options (ranged gets extra choices)
@@ -928,7 +982,7 @@ function openUnitStratDialogForItem(team, item, unitDef) {
     focusTarget.innerHTML = '';
     const emptyOpt = document.createElement('option');
     emptyOpt.value = '';
-    emptyOpt.textContent = 'Auto (prima che trova)';
+    emptyOpt.textContent = 'Auto (first found)';
     focusTarget.appendChild(emptyOpt);
     const enemyTeam = team === 'A' ? 'B' : 'A';
     const seen = new Map();
@@ -1157,8 +1211,7 @@ function unitCanConfigureCharge(def) {
     ...(Array.isArray(def && def.displayClasses) ? def.displayClasses : []),
   ].map((entry) => String(entry).toLowerCase());
 
-  const excluded = id === 'sofa'
-    || id === 'camel-raider'
+  const excluded = id === 'camel-raider'
     || id === 'desert-raider'
     || (id.includes('camel') && id.includes('raider'))
     || id.includes('elephant')
@@ -1186,6 +1239,10 @@ function unitCanConfigureDeflectiveArmor(def) {
   ].map((entry) => String(entry).toLowerCase());
 
   return classes.includes('deflective_armor');
+}
+
+function unitCanConfigurePavise(def) {
+  return String(def && def.id ? def.id : '').toLowerCase() === 'arbaletrier';
 }
 
 function unitIconDataUri(unit) {
@@ -1306,7 +1363,7 @@ function getUnitResourceTotal(def) {
 }
 
 function formatResourceNumber(value) {
-  return new Intl.NumberFormat('it-IT').format(Math.max(0, Math.round(Number(value) || 0)));
+  return new Intl.NumberFormat('en-US').format(Math.max(0, Math.round(Number(value) || 0)));
 }
 
 function computeTeamResourceBreakdown(team, defsById) {
@@ -1342,10 +1399,10 @@ function renderTeamResourceSummary(team, defsById) {
   const breakdownEl = resourceSummary.querySelector('.unit-resource-summary-breakdown');
 
   if (totalEl) {
-    totalEl.textContent = `Totale: ${formatResourceNumber(totals.total)}`;
+    totalEl.textContent = `Total: ${formatResourceNumber(totals.total)}`;
   }
   if (breakdownEl) {
-    breakdownEl.textContent = `Cibo ${formatResourceNumber(totals.food)} • Oro ${formatResourceNumber(totals.gold)} • Legna ${formatResourceNumber(totals.wood)}`;
+    breakdownEl.textContent = `Food ${formatResourceNumber(totals.food)} • Gold ${formatResourceNumber(totals.gold)} • Wood ${formatResourceNumber(totals.wood)}`;
   }
 }
 
@@ -1382,6 +1439,7 @@ function renderUnitList(team) {
     const techOptions = unitDef ? resolveUnitTechOptionsForUnit(team, unitDef) : [];
     const supportsChargeToggle = unitDef ? unitCanConfigureCharge(unitDef) : false;
     const supportsDeflectiveArmorToggle = unitDef ? unitCanConfigureDeflectiveArmor(unitDef) : false;
+    const supportsPaviseToggle = unitDef ? unitCanConfigurePavise(unitDef) : false;
     const selectedTechIds = techOptions.length
       ? getSelectedUnitTechIdsForItem(team, item, techOptions, { autoInit: true })
       : [];
@@ -1390,10 +1448,12 @@ function renderUnitList(team) {
     const deflectiveSuffix = supportsDeflectiveArmorToggle && item.deflectiveArmorEnabled === false
       ? ' • deflective off'
       : '';
+    const paviseSuffix = supportsPaviseToggle && item.paviseEnabled === false ? ' • pavise off' : '';
     const stratType = item.strategy && item.strategy.type ? item.strategy.type : 'straight';
     const stratLabel = stratType === 'kiting' ? 'kiting' : stratType === 'straightFocusFire' ? 'focus fire' : '';
     const stratSuffix = stratLabel ? ` • ${stratLabel}` : '';
-    count.textContent = `x${item.count} • ${batchResourceTotal} res${techSuffix}${chargeSuffix}${deflectiveSuffix}${stratSuffix}`;
+    count.textContent = `x${item.count} • ${batchResourceTotal} res${techSuffix}${chargeSuffix}${deflectiveSuffix}${paviseSuffix}${stratSuffix}`;
+
     meta.appendChild(title);
     meta.appendChild(count);
 
@@ -1404,18 +1464,18 @@ function renderUnitList(team) {
     stratBtn.type = 'button';
     stratBtn.className = 'btn unit-batch-strat-btn';
     stratBtn.textContent = '⚔';
-    stratBtn.title = 'Strategia unita';
+    stratBtn.title = 'Unit strategy';
     stratBtn.addEventListener('click', () => {
       openUnitStratDialogForItem(team, item, unitDef);
     });
     actions.appendChild(stratBtn);
 
-    if ((techOptions.length || supportsChargeToggle || supportsDeflectiveArmorToggle) && unitDef) {
+    if ((techOptions.length || supportsChargeToggle || supportsDeflectiveArmorToggle || supportsPaviseToggle) && unitDef) {
       const techBtn = document.createElement('button');
       techBtn.type = 'button';
       techBtn.className = 'btn unit-batch-tech-btn';
       techBtn.textContent = '⚙';
-      techBtn.title = 'Unit tech e impostazioni unita';
+      techBtn.title = 'Unit tech and unit settings';
       techBtn.addEventListener('click', () => {
         openUnitTechDialogForItem(team, item, unitDef);
       });
@@ -1426,7 +1486,7 @@ function renderUnitList(team) {
     removeBtn.type = 'button';
     removeBtn.textContent = '✕';
     removeBtn.className = 'btn unit-batch-remove-btn';
-    removeBtn.title = 'Rimuovi unita';
+    removeBtn.title = 'Remove unit';
     removeBtn.addEventListener('click', () => {
       const removeKey = item.selectionKey || `${item.unitId}::default`;
       removeSelectedUnitTechsForItem(team, item);
@@ -1513,7 +1573,8 @@ async function applyTeamTemplate(team, templateTeam) {
       name: found.name,
       count: spec.count || 1,
       chargeEnabled: true,
-        deflectiveArmorEnabled: true,
+      deflectiveArmorEnabled: true,
+      paviseEnabled: true,
       strategy: { type: defaultStratType },
     });
   }
@@ -1612,6 +1673,7 @@ function attachTeamHandlers(team) {
         selectionKey,
         chargeEnabled: true,
         deflectiveArmorEnabled: true,
+        paviseEnabled: true,
         strategy: { type: 'straight' },
       };
       state.selectedUnits[team].push(created);
@@ -1642,6 +1704,7 @@ function readTeamConfig(team) {
         attackMode: u.attackMode || null,
         chargeEnabled: u.chargeEnabled !== false,
         deflectiveArmorEnabled: u.deflectiveArmorEnabled !== false,
+        paviseEnabled: u.paviseEnabled !== false,
         strategy: u.strategy || { type: 'straight' },
         unitTechs: getSelectedUnitTechIdsForItem(
           team,
@@ -1690,7 +1753,7 @@ function initTemplateSelector() {
 
   const placeholder = document.createElement('option');
   placeholder.value = '';
-  placeholder.textContent = 'Seleziona template';
+  placeholder.textContent = 'Select template';
   placeholder.disabled = true;
   placeholder.selected = true;
   select.appendChild(placeholder);

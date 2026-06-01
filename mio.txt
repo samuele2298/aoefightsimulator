@@ -1,20 +1,18 @@
 FEAT:
-	- da rivedere stats ... non utili..
-	- feat dato un esercito e l altro -> equal cost e equal number
+	- review stats ... not useful..
+	- feature given one army and the other -> equal cost and equal number
 
-	- tech di alcune landkmark specificeh non presneti (MAA OTD mainwrok )
+	- tech from some specific landmarks missing (MAA OTD mainwork)
 
-	- voglio un progrss bar delle unita ancora vive attuali da mettere nel legenda del team per 
-		capire qaundo ne sno riamste vive inq uel moemtno delle simluzione lo metti subito sotto le info del team
-		priam delel units 
+
 FIX:
 
 
 
 
 ---
-Obbiettivo riuscire a simulare facilmente l outcome di un fight per capire quanto impatta a livello trade di risorse
+Objective: easily simulate the outcome of a fight to understand the impact on resource trade.
 
-Dati -> https://github.com/aoe4world/data/ (tutti i dati di unita attaco bonus ecc...)
+Data -> https://github.com/aoe4world/data/ (all unit data, bonus attack, etc.)
 
 

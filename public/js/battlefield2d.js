@@ -29,6 +29,22 @@ export function createBattlefieldRenderer(canvas) {
 
   canvas.style.touchAction = 'none';
 
+  function resizeCanvasToDisplaySize() {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const displayWidth = Math.round(rect.width * dpr);
+    const displayHeight = Math.round(rect.height * dpr);
+
+    if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+      canvas.width = displayWidth;
+      canvas.height = displayHeight;
+    }
+  }
+
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -250,7 +266,7 @@ export function createBattlefieldRenderer(canvas) {
     return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 8);
   }
 
-  function drawLegendBlock(team, x, y) {
+  function drawLegendBlock(team, x, y, widthOverride = null) {
     const meta = teamMeta[team] || { civAbbr: team, civName: `Team ${team}`, banner: '' };
     const banner = getImage(meta.banner);
     const rows = buildLegendRows(team);
@@ -259,7 +275,7 @@ export function createBattlefieldRenderer(canvas) {
     const alive = teamUnits.filter((unit) => unit.hp > 0).length;
     const aliveRatio = totalUnits > 0 ? alive / totalUnits : 0;
     const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0);
-    const width = 392;
+    const width = widthOverride || 392;
     const headerHeight = 50;
     const progressBlockHeight = 30;
     const rowHeight = 34;
@@ -384,6 +400,11 @@ export function createBattlefieldRenderer(canvas) {
         ctx.stroke();
       }
     });
+
+    return {
+      width,
+      height,
+    };
   }
 
   function drawZoomBadge() {
@@ -419,6 +440,8 @@ export function createBattlefieldRenderer(canvas) {
   }
 
   function renderFrame() {
+    resizeCanvasToDisplaySize();
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackgroundGrid();
     drawObstacles();
@@ -427,8 +450,17 @@ export function createBattlefieldRenderer(canvas) {
       drawUnit(unit);
     }
 
-    drawLegendBlock('A', 10, 10);
-    drawLegendBlock('B', canvas.width - 370, 10);
+    const legendGap = 10;
+    const maxLegendWidth = Math.min(392, Math.max(220, Math.floor((canvas.width - legendGap * 3) / 2)));
+    const enoughForTwoColumns = canvas.width >= (maxLegendWidth * 2 + legendGap * 3);
+
+    const leftLegend = drawLegendBlock('A', legendGap, legendGap, maxLegendWidth);
+    if (enoughForTwoColumns) {
+      drawLegendBlock('B', canvas.width - maxLegendWidth - legendGap, legendGap, maxLegendWidth);
+    } else {
+      const nextY = legendGap + (leftLegend ? leftLegend.height + 8 : 8);
+      drawLegendBlock('B', legendGap, nextY, maxLegendWidth);
+    }
     drawZoomBadge();
 
     animationId = requestAnimationFrame(renderFrame);
@@ -536,6 +568,8 @@ export function createBattlefieldRenderer(canvas) {
   });
 
   updateCursor();
+
+  window.addEventListener('resize', resizeCanvasToDisplaySize);
 
   function stop() {
     if (animationId) {

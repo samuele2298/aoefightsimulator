@@ -116,10 +116,19 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
     const deflectiveArmorEnabled = item && typeof item.deflectiveArmorEnabled === 'boolean'
       ? item.deflectiveArmorEnabled
       : true;
+    const paviseEnabled = item && typeof item.paviseEnabled === 'boolean'
+      ? item.paviseEnabled
+      : true;
     const itemStrategy = (item && item.strategy) || { type: 'straight' };
     const count = Math.max(1, parseInt(item.count || 0, 10));
     for (let i = 0; i < count; i += 1) {
-      expandedUnits.push({ def, chargeEnabled, deflectiveArmorEnabled, strategy: itemStrategy });
+      expandedUnits.push({
+        def,
+        chargeEnabled,
+        deflectiveArmorEnabled,
+        paviseEnabled,
+        strategy: itemStrategy,
+      });
     }
   }
 
@@ -168,6 +177,7 @@ function createUnitsForTeam(team, teamConfig, mapWidth, mapHeight, defaultStartX
       def: entry.def,
       chargeEnabled: entry.chargeEnabled,
       deflectiveArmorEnabled: entry.deflectiveArmorEnabled,
+      paviseEnabled: entry.paviseEnabled,
       strategy: entry.strategy || { type: 'straight' },
       x: clamp(baseX + jitter.dx, 0, mapWidth),
       y: clamp(baseY + jitter.dy, 0, mapHeight),

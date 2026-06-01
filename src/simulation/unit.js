@@ -12,6 +12,7 @@ class SimUnit {
     y,
     chargeEnabled = true,
     deflectiveArmorEnabled = true,
+    paviseEnabled = true,
     strategy = null,
   }) {
     this.id = id;
@@ -31,6 +32,7 @@ class SimUnit {
     this.lastCombatTick = Number.NEGATIVE_INFINITY;
     this.deflectiveArmorEnabled = deflectiveArmorEnabled !== false;
     this.deflectiveArmorCharge = this.hasDeflectiveArmor();
+    this.paviseEnabled = paviseEnabled !== false;
     this.chargeEnabled = chargeEnabled !== false;
     this.chargeReady = this.canUseCharge();
     this.chargeApproachActive = false;
@@ -86,6 +88,10 @@ class SimUnit {
     return this.deflectiveArmorEnabled && this.hasClass('deflective_armor');
   }
 
+  hasPavise() {
+    return this.paviseEnabled && String(this.def && this.def.id ? this.def.id : '').toLowerCase() === 'arbaletrier';
+  }
+
   isRoyalKnight() {
     return String(this.def.id || '').toLowerCase() === 'royal-knight';
   }
@@ -104,7 +110,7 @@ class SimUnit {
     const isCamelRaider = id.includes('camel') && id.includes('raider');
     const isDesertRaider = id === 'desert-raider';
     const isElephant = id.includes('elephant') || classes.some((entry) => entry.includes('elephant'));
-    if (id === 'sofa' || id === 'camel-raider' || isCamelRaider || isDesertRaider || isElephant) {
+    if (id === 'camel-raider' || isCamelRaider || isDesertRaider || isElephant) {
       return false;
     }
 
@@ -170,7 +176,11 @@ class SimUnit {
       return 0;
     }
     const found = this.def.armor.find((a) => a.type === attackType);
-    return found ? found.value : 0;
+    const base = found ? found.value : 0;
+    if (attackType === 'ranged' && this.hasPavise()) {
+      return base + 5;
+    }
+    return base;
   }
 
   applyDamage(value) {

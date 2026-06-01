@@ -21,12 +21,12 @@
         </div>
 
         <div class="control-group start-group">
-          <button id="start-btn" class="btn primary">Lancia Simulazione</button>
+          <button id="start-btn" class="btn primary">Start Simulation</button>
           <div id="status" class="status">Idle</div>
         </div>
 
         <div class="control-group map-group">
-          <label>Mappa
+          <label>Map
             <select id="environment">
               <option value="dry-arabia" selected>Dry Arabia</option>
             </select>
@@ -48,10 +48,10 @@
             <button id="zoom-out" class="btn icon-btn" title="Zoom out" aria-label="Zoom out">－</button>
           </div>
           <div class="speed-row">
-            <button class="btn speed-btn is-active" data-speed="1">x1</button>
+            <button class="btn speed-btn is-active" data-speed="0.5">x0.5</button>
+            <button class="btn speed-btn" data-speed="1">x1</button>
             <button class="btn speed-btn" data-speed="2">x2</button>
             <button class="btn speed-btn" data-speed="4">x4</button>
-            <button class="btn speed-btn" data-speed="8">x8</button>
           </div>
         </div>
       </header>
@@ -66,7 +66,7 @@
                 <select id="teamA-civ"></select>
               </div>
             </label>
-            <label>Eta
+            <label>Age
               <select id="teamA-age">
                 <option value="1">I</option>
                 <option value="2" selected>II</option>
@@ -74,15 +74,15 @@
                 <option value="4">IV</option>
               </select>
             </label>
-            <label>Formazione
+            <label>Formation
               <select id="teamA-formation">
-                <option value="normal">Normale</option>
-                <option value="line">Linea</option>
+                <option value="normal">Normal</option>
+                <option value="line">Line</option>
               </select>
             </label>
             <div class="team-tech-row">
               <button id="teamA-tech-btn" type="button" class="btn">Tech Tree</button>
-              <div id="teamA-tech-summary" class="tech-summary">Nessuna tech selezionata</div>
+              <div id="teamA-tech-summary" class="tech-summary">No tech selected</div>
             </div>
             <div class="unit-picker">
               <div class="unit-select-row">
@@ -90,18 +90,18 @@
                 <select id="teamA-unit-select"></select>
               </div>
               <input type="number" min="1" max="200" value="10" id="teamA-unit-count" />
-              <button type="button" data-team="A" class="btn add-unit add-unit-btn" aria-label="Aggiungi unita" title="Aggiungi unita">+</button>
+              <button type="button" data-team="A" class="btn add-unit add-unit-btn" aria-label="Add unit" title="Add unit">+</button>
             </div>
-            <label id="teamA-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Modalita Desert Raider
+            <label id="teamA-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Desert Raider mode
               <select id="teamA-unit-attack-mode">
                 <option value="ranged" selected>Ranged</option>
                 <option value="melee">Melee</option>
               </select>
             </label>
             <div id="teamA-resource-summary" class="unit-resource-summary" aria-live="polite">
-              <div class="unit-resource-summary-title">Costo esercito selezionato</div>
-              <div class="unit-resource-summary-total">Totale: 0</div>
-              <div class="unit-resource-summary-breakdown">Cibo 0 • Oro 0 • Legna 0</div>
+              <div class="unit-resource-summary-title">Selected army cost</div>
+              <div class="unit-resource-summary-total">Total: 0</div>
+              <div class="unit-resource-summary-breakdown">Food 0 • Gold 0 • Wood 0</div>
             </div>
             <ul id="teamA-unit-list" class="unit-list"></ul>
           </section>
@@ -112,7 +112,7 @@
             <h2>Battlefield 2D</h2>
             <canvas id="battlefield" width="1320" height="760"></canvas>
           </section>
-          <div id="playback-info" class="status playback-info">Replay pronto quando arriva una simulazione.</div>
+          <div id="playback-info" class="status playback-info">Replay ready when a simulation arrives.</div>
         </main>
 
         <aside class="panel team-panel team-panel-right">
@@ -124,7 +124,7 @@
                 <select id="teamB-civ"></select>
               </div>
             </label>
-            <label>Eta
+            <label>Age
               <select id="teamB-age">
                 <option value="1">I</option>
                 <option value="2" selected>II</option>
@@ -132,15 +132,15 @@
                 <option value="4">IV</option>
               </select>
             </label>
-            <label>Formazione
+            <label>Formation
               <select id="teamB-formation">
-                <option value="normal">Normale</option>
-                <option value="line">Linea</option>
+                <option value="normal">Normal</option>
+                <option value="line">Line</option>
               </select>
             </label>
             <div class="team-tech-row">
               <button id="teamB-tech-btn" type="button" class="btn">Tech Tree</button>
-              <div id="teamB-tech-summary" class="tech-summary">Nessuna tech selezionata</div>
+              <div id="teamB-tech-summary" class="tech-summary">No tech selected</div>
             </div>
             <div class="unit-picker">
               <div class="unit-select-row">
@@ -148,18 +148,18 @@
                 <select id="teamB-unit-select"></select>
               </div>
               <input type="number" min="1" max="200" value="10" id="teamB-unit-count" />
-              <button type="button" data-team="B" class="btn add-unit add-unit-btn" aria-label="Aggiungi unita" title="Aggiungi unita">+</button>
+              <button type="button" data-team="B" class="btn add-unit add-unit-btn" aria-label="Add unit" title="Add unit">+</button>
             </div>
-            <label id="teamB-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Modalita Desert Raider
+            <label id="teamB-unit-attack-mode-wrap" class="unit-attack-mode-wrap">Desert Raider mode
               <select id="teamB-unit-attack-mode">
                 <option value="ranged" selected>Ranged</option>
                 <option value="melee">Melee</option>
               </select>
             </label>
             <div id="teamB-resource-summary" class="unit-resource-summary" aria-live="polite">
-              <div class="unit-resource-summary-title">Costo esercito selezionato</div>
-              <div class="unit-resource-summary-total">Totale: 0</div>
-              <div class="unit-resource-summary-breakdown">Cibo 0 • Oro 0 • Legna 0</div>
+              <div class="unit-resource-summary-title">Selected army cost</div>
+              <div class="unit-resource-summary-total">Total: 0</div>
+              <div class="unit-resource-summary-breakdown">Food 0 • Gold 0 • Wood 0</div>
             </div>
             <ul id="teamB-unit-list" class="unit-list"></ul>
           </section>
@@ -234,6 +234,15 @@
             </div>
           </label>
         </div>
+        <div id="unit-tech-item-pavise-wrap" class="tech-option unit-tech-charge-wrap" hidden>
+          <label>
+            <input id="unit-tech-item-pavise-active" type="checkbox" checked />
+            <div>
+              <div class="tech-option-title">Pavise Active</div>
+              <div class="tech-option-meta">Arbaletrier shield stance: +5 armor ranged while active.</div>
+            </div>
+          </label>
+        </div>
         <div class="tech-bulk-actions">
           <button id="unit-tech-item-clear" type="button" class="btn">Clear All</button>
           <button id="unit-tech-item-select-all" type="button" class="btn">Select All</button>
@@ -251,7 +260,7 @@
         <h3 id="unit-strat-title">Unit Strategy</h3>
         <div class="strat-dialog-body">
           <label class="strat-field">
-            <span>Strategia</span>
+            <span>Strategy</span>
             <select id="unit-strat-type">
               <!-- populated dynamically based on unit type -->
             </select>
@@ -259,28 +268,28 @@
           <!-- focus fire settings – shown for kiting and straightFocusFire only -->
           <div id="unit-strat-focus-settings" class="strat-focus-options" hidden>
             <label class="strat-field">
-              <span>Target unità (opzionale)</span>
+              <span>Target unit (optional)</span>
               <select id="unit-strat-focus-target"></select>
             </label>
             <label class="strat-field">
               <span>Group Split</span>
               <select id="unit-strat-group-split">
-                <option value="1">1 – Tutti su un target</option>
-                <option value="2">2 – Due gruppi</option>
-                <option value="3">3 – Tre gruppi</option>
-                <option value="4">4 – Quattro gruppi</option>
-                <option value="5">5 – Cinque gruppi</option>
+                <option value="1">1 - All on one target</option>
+                <option value="2">2 - Two groups</option>
+                <option value="3">3 - Three groups</option>
+                <option value="4">4 - Four groups</option>
+                <option value="5">5 - Five groups</option>
               </select>
             </label>
             <label class="strat-field">
-              <span>Riattacco (sec)</span>
+              <span>Re-attack (sec)</span>
               <input id="unit-strat-reattack-time" type="number" min="0.5" max="30" step="0.1" value="0.5" />
             </label>
           </div>
         </div>
         <div class="actions">
-          <button id="unit-strat-cancel" type="button" class="btn">Annulla</button>
-          <button id="unit-strat-apply" type="button" class="btn primary">Applica</button>
+          <button id="unit-strat-cancel" type="button" class="btn">Cancel</button>
+          <button id="unit-strat-apply" type="button" class="btn primary">Apply</button>
         </div>
       </form>
     </dialog>
