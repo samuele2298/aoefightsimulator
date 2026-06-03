@@ -3,6 +3,7 @@
 const express = require('express');
 
 const logger = require('../../logger');
+const { trackSimulation, trackMonteCarlo } = require('../tracker');
 const {
   startSimulation,
   stopSimulation,
@@ -18,6 +19,8 @@ const router = express.Router();
 
 router.post('/start', (req, res) => {
   try {
+    const ip = req.ip || req.socket?.remoteAddress;
+    trackSimulation(req.body || {}, ip);
     const result = startSimulation(req.body || {});
     res.json(result);
   } catch (error) {
@@ -83,6 +86,8 @@ router.get('/result', (_req, res) => {
 router.post('/monte-carlo', (req, res) => {
   try {
     const body = req.body || {};
+    const ip = req.ip || req.socket?.remoteAddress;
+    trackMonteCarlo(body, ip);
     const runs = body.monteCarloRuns || body.runs || 30;
     const summary = runMonteCarlo(body, runs);
     res.json(summary);

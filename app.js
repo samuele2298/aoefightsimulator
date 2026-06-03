@@ -12,6 +12,7 @@ const logger = require('./logger');
 const dataRoutes = require('./src/routes/dataRoutes');
 const simulationRoutes = require('./src/routes/simulationRoutes');
 const { registerWsHandlers } = require('./src/simulation/wsHandler');
+const { startScheduler } = require('./src/tg');
 
 const normalizePort = (val) => {
   const port = parseInt(val, 10);
@@ -76,6 +77,9 @@ const main = async () => {
 
   const wss = new WebSocketServer({ server, path: '/ws' });
   registerWsHandlers(wss);
+
+  // Start Telegram daily reporter (no-op if tgBotToken/tgChatId not configured)
+  startScheduler();
 
 
   // Graceful shutdown
