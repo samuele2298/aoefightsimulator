@@ -140,11 +140,6 @@ function startScheduler() {
     return;
   }
 
-    // Test send delayed by 1 minute on boot.
-    setTimeout(() => {
-      sendDailyReport();
-    }, 60 * 1000);
-
   function scheduleNext() {
     const now = new Date();
     const nextMidnight = new Date(
