@@ -151,15 +151,7 @@ function startScheduler() {
 
     schedulerStarted = true;
 
-    dailyTimer = setInterval(async () => {
-      try {
-        await sendDailyReport();
-      } catch (err) {
-        logger.error(err, 'tg: test-mode sendDailyReport failed');
-      }
-    }, 60 * 1000);
-
-    /*function scheduleNext() {
+    function scheduleNext() {
       const now = new Date();
       const nextMidnight = new Date(
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
@@ -181,7 +173,7 @@ function startScheduler() {
           scheduleNext();
         }
       }, msUntilMidnight);
-    }*/
+    }
 
     scheduleNext();
     logger.info('tg: daily reporter scheduler started');
