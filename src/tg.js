@@ -19,6 +19,9 @@ const config = require('../config');
 const logger = require('../logger');
 const { getDailySnapshot, resetDaily } = require('./tracker');
 
+let dailyTimer = null;
+let schedulerStarted = false;
+
 // ── Low-level Telegram API call ──────────────────────────────────────────────
 
 /**
@@ -135,35 +138,50 @@ async function sendDailyReport() {
  * Uses a self-adjusting setTimeout (no cron library needed).
  */
 function startScheduler() {
-  try { 
+  try {
+    if (schedulerStarted) {
+      logger.warn('tg: daily reporter scheduler already started, skipping duplicate start');
+      return;
+    }
+
     if (!config.tgBotToken || !config.tgChatId) {
       logger.warn('tg: tgBotToken or tgChatId missing — daily reporter NOT started');
       return;
     }
 
-      // Test send delayed by 1 minute on boot.
-      setTimeout(() => {
-        sendDailyReport();
-      }, 60 * 1000);
+    schedulerStarted = true;
 
-    function scheduleNext() {
+    dailyTimer = setInterval(async () => {
+      try {
+        await sendDailyReport();
+      } catch (err) {
+        logger.error(err, 'tg: test-mode sendDailyReport failed');
+      }
+    }, 60 * 1000);
+
+    /*function scheduleNext() {
       const now = new Date();
       const nextMidnight = new Date(
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
       );
       const msUntilMidnight = nextMidnight.getTime() - now.getTime();
 
-      logger.info(`tg: next daily report in ${Math.round(msUntilMidnight / 60000)} minutes`);
+      logger.info(
+        `tg: next daily report at ${nextMidnight.toISOString()} ` +
+        `(${Math.round(msUntilMidnight / 60000)} minutes)`
+      );
 
-      setTimeout(async () => {
+      dailyTimer = setTimeout(async () => {
         try {
           await sendDailyReport();
         } catch (err) {
           logger.error(err, 'tg: sendDailyReport failed');
+        } finally {
+          // Always schedule the next run, even if today's send failed.
+          scheduleNext();
         }
-        scheduleNext(); // reschedule for the following day
       }, msUntilMidnight);
-    }
+    }*/
 
     scheduleNext();
     logger.info('tg: daily reporter scheduler started');
