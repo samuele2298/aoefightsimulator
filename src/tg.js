@@ -136,38 +136,40 @@ async function sendDailyReport() {
  */
 function startScheduler() {
   try { 
-  if (!config.tgBotToken || !config.tgChatId) {
-    logger.warn('tg: tgBotToken or tgChatId missing — daily reporter NOT started');
-    return;
+    if (!config.tgBotToken || !config.tgChatId) {
+      logger.warn('tg: tgBotToken or tgChatId missing — daily reporter NOT started');
+      return;
+    }
+
+      // Test send delayed by 1 minute on boot.
+      setTimeout(() => {
+        sendDailyReport();
+      }, 60 * 1000);
+
+    function scheduleNext() {
+      const now = new Date();
+      const nextMidnight = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
+      );
+      const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+
+      logger.info(`tg: next daily report in ${Math.round(msUntilMidnight / 60000)} minutes`);
+
+      setTimeout(async () => {
+        try {
+          await sendDailyReport();
+        } catch (err) {
+          logger.error(err, 'tg: sendDailyReport failed');
+        }
+        scheduleNext(); // reschedule for the following day
+      }, msUntilMidnight);
+    }
+
+    scheduleNext();
+    logger.info('tg: daily reporter scheduler started');
+  } catch (e) {
+    logger.error(e, 'tg: failed to start scheduler');
   }
-
-    // Test send delayed by 1 minute on boot.
-    setTimeout(() => {
-      sendDailyReport();
-    }, 60 * 1000);
-
-  function scheduleNext() {
-    const now = new Date();
-    const nextMidnight = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
-    );
-    const msUntilMidnight = nextMidnight.getTime() - now.getTime();
-
-    logger.info(`tg: next daily report in ${Math.round(msUntilMidnight / 60000)} minutes`);
-
-    setTimeout(async () => {
-      try {
-        await sendDailyReport();
-      } catch (err) {
-        logger.error(err, 'tg: sendDailyReport failed');
-      }
-      scheduleNext(); // reschedule for the following day
-    }, msUntilMidnight);
-  }
-
-  scheduleNext();
-  logger.info('tg: daily reporter scheduler started');
-} catch (err) {
 }
 
 module.exports = { sendMessage, sendDailyReport, startScheduler };
