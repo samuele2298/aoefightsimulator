@@ -135,10 +135,16 @@ async function sendDailyReport() {
  * Uses a self-adjusting setTimeout (no cron library needed).
  */
 function startScheduler() {
+  try { 
   if (!config.tgBotToken || !config.tgChatId) {
     logger.warn('tg: tgBotToken or tgChatId missing — daily reporter NOT started');
     return;
   }
+
+    // Test send delayed by 1 minute on boot.
+    setTimeout(() => {
+      sendDailyReport();
+    }, 60 * 1000);
 
   function scheduleNext() {
     const now = new Date();
@@ -161,6 +167,7 @@ function startScheduler() {
 
   scheduleNext();
   logger.info('tg: daily reporter scheduler started');
+} catch (err) {
 }
 
 module.exports = { sendMessage, sendDailyReport, startScheduler };
