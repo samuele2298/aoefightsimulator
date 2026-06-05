@@ -3,6 +3,7 @@
 const express = require('express');
 
 const logger = require('../../logger');
+const { tgNotify, sendServerError } = require('../tg');
 const {
   getUnitsRaw,
   getBuildingsRaw,
@@ -33,6 +34,7 @@ router.get('/units', (req, res) => {
     res.json({ count: units.length, data: units });
   } catch (error) {
     logger.error(error, 'Failed to read units');
+    tgNotify(() => sendServerError({ type: 'http', where: '/api/data/units', error: error.message || 'Failed to load units', details: error.stack || 'no stack' }));
     res.status(500).json({ error: 'Failed to load units' });
   }
 });
@@ -47,6 +49,7 @@ router.get('/buildings', (req, res) => {
     res.json({ count: buildings.length, data: buildings });
   } catch (error) {
     logger.error(error, 'Failed to read buildings');
+    tgNotify(() => sendServerError({ type: 'http', where: '/api/data/buildings', error: error.message || 'Failed to load buildings', details: error.stack || 'no stack' }));
     res.status(500).json({ error: 'Failed to load buildings' });
   }
 });
@@ -58,6 +61,7 @@ router.get('/civilizations', (_req, res) => {
     res.json({ count: civilizations.length, data: civilizations });
   } catch (error) {
     logger.error(error, 'Failed to read civilizations');
+    tgNotify(() => sendServerError({ type: 'http', where: '/api/data/civilizations', error: error.message || 'Failed to load civilizations', details: error.stack || 'no stack' }));
     res.status(500).json({ error: 'Failed to load civilizations' });
   }
 });
@@ -72,6 +76,7 @@ router.get('/technologies', (req, res) => {
     res.json({ count: technologies.length, data: technologies });
   } catch (error) {
     logger.error(error, 'Failed to read technologies');
+    tgNotify(() => sendServerError({ type: 'http', where: '/api/data/technologies', error: error.message || 'Failed to load technologies', details: error.stack || 'no stack' }));
     res.status(500).json({ error: 'Failed to load technologies' });
   }
 });
@@ -82,6 +87,7 @@ router.post('/refresh', async (_req, res) => {
     res.json({ ok: true });
   } catch (error) {
     logger.error(error, 'Failed to refresh aoe4data');
+    tgNotify(() => sendServerError({ type: 'http', where: '/api/data/refresh', error: error.message || 'Failed to refresh aoe4data', details: error.stack || 'no stack' }));
     res.status(500).json({ error: 'Failed to refresh aoe4data package' });
   }
 });

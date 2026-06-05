@@ -163,9 +163,26 @@ async function sendServerError(info) {
   await sendMessage(text);
 }
 
+/**
+ * Fire-and-forget wrapper: calls fn(), catches any error, never throws.
+ * Use this whenever you want a Telegram notification that must never block
+ * or crash the caller.
+ * @param {() => Promise<any>} fn
+ */
+function tgNotify(fn) {
+  try {
+    Promise.resolve(fn()).catch((err) => {
+      logger.error(err, 'tg: background notification failed');
+    });
+  } catch (err) {
+    logger.error(err, 'tg: notification setup failed');
+  }
+}
+
 module.exports = {
   sendMessage,
   sendSimulationStarted,
   sendSimulationError,
   sendServerError,
+  tgNotify,
 };
