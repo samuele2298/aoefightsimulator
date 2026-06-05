@@ -4,6 +4,7 @@ const express = require('express');
 
 const logger = require('../../logger');
 const { trackSimulation, trackMonteCarlo } = require('../tracker');
+const { sendSimulationStarted, sendSimulationError } = require('../tg');
 const {
   startSimulation,
   stopSimulation,
@@ -18,13 +19,27 @@ const {
 const router = express.Router();
 
 router.post('/start', (req, res) => {
+  const body = req.body || {};
+  const ip = req.ip || req.socket?.remoteAddress;
   try {
-    const ip = req.ip || req.socket?.remoteAddress;
-    trackSimulation(req.body || {}, ip);
-    const result = startSimulation(req.body || {});
+    trackSimulation(body, ip);
+    const result = startSimulation(body);
     res.json(result);
+    sendSimulationStarted({
+      ip,
+      teamA: body.teamA,
+      teamB: body.teamB,
+      mode: 'start',
+    });
   } catch (error) {
     logger.error(error, 'Failed to start simulation');
+    sendSimulationError({
+      ip,
+      endpoint: '/api/simulation/start',
+      teamA: body.teamA,
+      teamB: body.teamB,
+      error: error.message || 'Failed to start simulation',
+    });
     res.status(400).json({ error: error.message || 'Failed to start simulation' });
   }
 });
@@ -84,15 +99,28 @@ router.get('/result', (_req, res) => {
 });
 
 router.post('/monte-carlo', (req, res) => {
+  const body = req.body || {};
+  const ip = req.ip || req.socket?.remoteAddress;
   try {
-    const body = req.body || {};
-    const ip = req.ip || req.socket?.remoteAddress;
     trackMonteCarlo(body, ip);
     const runs = body.monteCarloRuns || body.runs || 30;
     const summary = runMonteCarlo(body, runs);
     res.json(summary);
+    sendSimulationStarted({
+      ip,
+      teamA: body.teamA,
+      teamB: body.teamB,
+      mode: 'monte-carlo',
+    });
   } catch (error) {
     logger.error(error, 'Monte Carlo run failed');
+    sendSimulationError({
+      ip,
+      endpoint: '/api/simulation/monte-carlo',
+      teamA: body.teamA,
+      teamB: body.teamB,
+      error: error.message || 'Monte Carlo run failed',
+    });
     res.status(400).json({ error: error.message || 'Monte Carlo run failed' });
   }
 });

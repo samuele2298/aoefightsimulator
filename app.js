@@ -12,7 +12,7 @@ const logger = require('./logger');
 const dataRoutes = require('./src/routes/dataRoutes');
 const simulationRoutes = require('./src/routes/simulationRoutes');
 const { registerWsHandlers } = require('./src/simulation/wsHandler');
-const { startScheduler } = require('./src/tg');
+const { sendServerError } = require('./src/tg');
 
 const normalizePort = (val) => {
   const port = parseInt(val, 10);
@@ -64,6 +64,30 @@ const main = async () => {
   app.use('/api/data', dataRoutes);
   app.use('/api/simulation', simulationRoutes);
 
+  // Global error middleware: catches errors propagated via next(err).
+  app.use((err, req, res, next) => {
+    const ip = req.ip || req.socket?.remoteAddress;
+    const where = `${req.method} ${req.originalUrl}`;
+    logger.error(err, `Unhandled HTTP error on ${where}`);
+    sendServerError({
+      type: 'http',
+      where,
+      ip,
+      error: err && err.message ? err.message : 'Unhandled HTTP error',
+      details: err && err.stack ? err.stack : 'no stack',
+    });
+
+    if (res.headersSent) {
+      return next(err);
+    }
+
+    const status = Number(err && err.status) || 500;
+    if (req.originalUrl && req.originalUrl.startsWith('/api/')) {
+      return res.status(status).json({ error: err.message || 'Internal server error' });
+    }
+    return res.status(status).send('Internal server error');
+  });
+
   // Fallback: serve index.html for all non-API routes
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -74,12 +98,18 @@ const main = async () => {
   const port = normalizePort(config.port);
   const host = '0.0.0.0'; // Listen on all interfaces //Se 'localhost' -> accetta solo connessioni locali'
   const server = app.listen(port, host);
+  server.on('error', (err) => {
+    logger.error(err, 'HTTP server error');
+    sendServerError({
+      type: 'http-server',
+      where: 'server.listen',
+      error: err && err.message ? err.message : 'HTTP server error',
+      details: err && err.stack ? err.stack : 'no stack',
+    });
+  });
 
   const wss = new WebSocketServer({ server, path: '/ws' });
   registerWsHandlers(wss);
-
-  // Start Telegram daily reporter (no-op if tgBotToken/tgChatId not configured)
-  startScheduler();
 
 
   // Graceful shutdown
@@ -99,6 +129,27 @@ const main = async () => {
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT',  () => shutdown('SIGINT'));
+
+  process.on('unhandledRejection', (reason) => {
+    const details = reason && reason.stack ? reason.stack : JSON.stringify(reason);
+    logger.error(details, 'Unhandled promise rejection');
+    sendServerError({
+      type: 'unhandledRejection',
+      where: 'process',
+      error: reason && reason.message ? reason.message : String(reason),
+      details,
+    });
+  });
+
+  process.on('uncaughtException', (err) => {
+    logger.error(err, 'Uncaught exception');
+    sendServerError({
+      type: 'uncaughtException',
+      where: 'process',
+      error: err && err.message ? err.message : 'uncaught exception',
+      details: err && err.stack ? err.stack : 'no stack',
+    });
+  });
 }
 
 main();

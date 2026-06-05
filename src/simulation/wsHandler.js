@@ -2,6 +2,7 @@
 
 const logger = require('../../logger');
 const { setBroadcaster } = require('./simulationManager');
+const { sendServerError } = require('../tg');
 
 function registerWsHandlers(wss) {
   setBroadcaster((payload) => {
@@ -15,6 +16,7 @@ function registerWsHandlers(wss) {
 
   wss.on('connection', (socket) => {
     logger.info('WebSocket client connected');
+    const ip = socket && socket._socket ? socket._socket.remoteAddress : 'unknown';
 
     socket.send(
       JSON.stringify({
@@ -29,6 +31,23 @@ function registerWsHandlers(wss) {
 
     socket.on('error', (error) => {
       logger.error(error, 'WebSocket client error');
+      sendServerError({
+        type: 'ws-client',
+        where: '/ws connection',
+        ip,
+        error: error && error.message ? error.message : 'WebSocket client error',
+        details: error && error.stack ? error.stack : 'no stack',
+      });
+    });
+  });
+
+  wss.on('error', (error) => {
+    logger.error(error, 'WebSocket server error');
+    sendServerError({
+      type: 'ws-server',
+      where: '/ws server',
+      error: error && error.message ? error.message : 'WebSocket server error',
+      details: error && error.stack ? error.stack : 'no stack',
     });
   });
 }

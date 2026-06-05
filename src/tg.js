@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Telegram bot reporter.
+ * Telegram notifications for simulation events.
  *
  * Uses the Telegram Bot HTTP API directly (no external library).
  * Requires in config:
@@ -9,18 +9,14 @@
  *   - tgChatId    : string  — your personal chat_id (get it via @userinfobot)
  *
  * Exports:
- *   - sendMessage(text)   — send any text message
- *   - sendDailyReport()   — build + send the stats report
- *   - startScheduler()    — schedule sendDailyReport at fixed UTC intervals
+ *   - sendMessage(text)            — send any text message
+ *   - sendSimulationStarted(info)  — notify when a simulation starts
+ *   - sendSimulationError(info)    — notify when simulation endpoints fail
  */
 
 const https = require('https');
 const config = require('../config');
 const logger = require('../logger');
-const { getDailySnapshot, resetDaily } = require('./tracker');
-
-let dailyTimer = null;
-let schedulerStarted = false;
 
 // ── Low-level Telegram API call ──────────────────────────────────────────────
 
@@ -99,106 +95,77 @@ async function sendMessage(text) {
   }
 }
 
-/**
- * Build the recap message and send it, then reset counters.
- */
-async function sendDailyReport() {
-  const snap = getDailySnapshot();
-
-  // ── Human-readable recap ──────────────────────────────────────────────────
-  const fmtRanked = (arr) =>
-    arr.length ? arr.map((x) => `  • ${x.name}: ${x.count}`).join('\n') : '  (none)';
-
-  const recap =
-    `<b>📊 AoE4 Simulator — Report ${snap.date}</b>\n\n` +
-    `🎮 Simulations started: <b>${snap.simulations}</b>\n` +
-    `🎲 Monte-Carlo runs: <b>${snap.monteCarlo}</b>\n` +
-    `👥 Unique clients: <b>${snap.uniqueClients}</b>\n` +
-    `⚔️  Total units deployed: <b>${snap.totalUnitsDeployed}</b>\n\n` +
-    `🏆 Top civs — Team A:\n${fmtRanked(snap.topCivsTeamA)}\n\n` +
-    `🛡️  Top civs — Team B:\n${fmtRanked(snap.topCivsTeamB)}\n\n` +
-    `🥇 Most winning civs:\n${fmtRanked(snap.topWinnerCivs)}\n\n` +
-    `🗺️  Top environments:\n${fmtRanked(snap.topEnvironments)}`;
-
-  // ── Raw JSON block ────────────────────────────────────────────────────────
-  const jsonBlock =
-    `<b>Raw JSON:</b>\n<pre>${JSON.stringify(snap, null, 2)}</pre>`;
-
-  await sendMessage(recap);
-  await sendMessage(jsonBlock);
-
-  // Reset after sending so each report covers only the latest interval window.
-  resetDaily();
+function esc(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
-// ── Scheduler ────────────────────────────────────────────────────────────────
-
-/**
- * Schedule sendDailyReport to run at fixed UTC intervals.
- * Uses a self-adjusting setTimeout (no cron library needed).
- */
-function startScheduler() {
-  try {
-    if (schedulerStarted) {
-      logger.warn('tg: reporter scheduler already started, skipping duplicate start');
-      return;
-    }
-
-    if (!config.tgBotToken || !config.tgChatId) {
-      logger.warn('tg: tgBotToken or tgChatId missing — reporter NOT started');
-      return;
-    }
-
-    schedulerStarted = true;
-    const intervalHours = Math.max(1, Number(process.env.TG_REPORT_INTERVAL_HOURS) || 6);
-    const intervalMs = intervalHours * 60 * 60 * 1000;
-
-    function scheduleNext() {
-      const now = new Date();
-      const elapsedMsToday =
-        now.getUTCHours() * 60 * 60 * 1000 +
-        now.getUTCMinutes() * 60 * 1000 +
-        now.getUTCSeconds() * 1000 +
-        now.getUTCMilliseconds();
-
-      const nextSlotMsToday =
-        Math.ceil((elapsedMsToday + 1) / intervalMs) * intervalMs;
-
-      const startOfDayUtc = Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
-        0,
-        0,
-        0,
-        0
-      );
-
-      const nextRun = new Date(startOfDayUtc + nextSlotMsToday);
-      const msUntilNextRun = nextRun.getTime() - now.getTime();
-
-      logger.info(
-        `tg: next report at ${nextRun.toISOString()} UTC ` +
-        `(every ${intervalHours}h, in ${Math.round(msUntilNextRun / 60000)} minutes)`
-      );
-
-      dailyTimer = setTimeout(async () => {
-        try {
-          await sendDailyReport();
-        } catch (err) {
-          logger.error(err, 'tg: sendDailyReport failed');
-        } finally {
-          // Always schedule the next run, even if sending failed.
-          scheduleNext();
-        }
-      }, msUntilNextRun);
-    }
-
-    scheduleNext();
-    logger.info(`tg: reporter scheduler started (interval ${intervalHours}h, UTC aligned)`);
-  } catch (e) {
-    logger.error(e, 'tg: failed to start scheduler');
-  }
+function getSafeCiv(team) {
+  return team && team.civ ? team.civ : 'unknown';
 }
 
-module.exports = { sendMessage, sendDailyReport, startScheduler };
+function toUtcIsoNow() {
+  return new Date().toISOString();
+}
+
+function truncate(value, max = 1200) {
+  const text = String(value || '');
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}...`;
+}
+
+async function sendSimulationStarted(info) {
+  const payload = info || {};
+  const teamA = payload.teamA || {};
+  const teamB = payload.teamB || {};
+  const mode = payload.mode || 'start';
+  const text =
+    '<b>Simulation Started</b>\n' +
+    `time_utc: <b>${esc(toUtcIsoNow())}</b>\n` +
+    `ip: <b>${esc(payload.ip || 'unknown')}</b>\n` +
+    `mode: <b>${esc(mode)}</b>\n` +
+    `teamA_civ: <b>${esc(getSafeCiv(teamA))}</b>\n` +
+    `teamB_civ: <b>${esc(getSafeCiv(teamB))}</b>`;
+
+  await sendMessage(text);
+}
+
+async function sendSimulationError(info) {
+  const payload = info || {};
+  const teamA = payload.teamA || {};
+  const teamB = payload.teamB || {};
+
+  const text =
+    '<b>Simulation Error</b>\n' +
+    `time_utc: <b>${esc(toUtcIsoNow())}</b>\n` +
+    `ip: <b>${esc(payload.ip || 'unknown')}</b>\n` +
+    `endpoint: <b>${esc(payload.endpoint || 'unknown')}</b>\n` +
+    `teamA_civ: <b>${esc(getSafeCiv(teamA))}</b>\n` +
+    `teamB_civ: <b>${esc(getSafeCiv(teamB))}</b>\n` +
+    `error: <b>${esc(payload.error || 'unknown')}</b>`;
+
+  await sendMessage(text);
+}
+
+async function sendServerError(info) {
+  const payload = info || {};
+  const text =
+    '<b>Server Error</b>\n' +
+    `time_utc: <b>${esc(toUtcIsoNow())}</b>\n` +
+    `type: <b>${esc(payload.type || 'unknown')}</b>\n` +
+    `where: <b>${esc(payload.where || 'unknown')}</b>\n` +
+    `ip: <b>${esc(payload.ip || 'unknown')}</b>\n` +
+    `error: <b>${esc(truncate(payload.error || 'unknown'))}</b>\n` +
+    `details: <b>${esc(truncate(payload.details || 'none'))}</b>`;
+
+  await sendMessage(text);
+}
+
+module.exports = {
+  sendMessage,
+  sendSimulationStarted,
+  sendSimulationError,
+  sendServerError,
+};

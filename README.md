@@ -147,12 +147,28 @@ Notes:
 - The workflow pings `${RENDER_APP_URL}/api/data/health`.
 - If the secret is missing or endpoint fails, the workflow fails intentionally.
 
-## Telegram Report Interval
+## Telegram Notifications
 
-Telegram reporting interval is UTC-based and configurable by env var:
+Telegram is event-based (no periodic report scheduler).
 
-- `TG_REPORT_INTERVAL_HOURS` (default: `6`)
+When a simulation is launched (`/api/simulation/start` or `/api/simulation/monte-carlo`),
+the server sends a Telegram message with:
 
-For your requested setup, set on Render:
+- UTC time
+- Client IP
+- Team A civilization
+- Team B civilization
 
-- `TG_REPORT_INTERVAL_HOURS=6`
+When simulation endpoints fail, the server sends an error message with:
+
+- UTC time
+- Client IP
+- Endpoint
+- Team A civilization
+- Team B civilization
+- Error message
+
+Required env vars:
+
+- `TG_BOT_TOKEN`
+- `TG_CHAT_ID`
