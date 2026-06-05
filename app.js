@@ -116,8 +116,7 @@ const main = async () => {
   const shutdown = async (signal) => {
     logger.info(`[SHUTDOWN] ${signal} received. Closing server...`);
     try {
-      server.close(async () => {
-        await db.$pool.end();
+      server.close(() => {
         logger.info('[SHUTDOWN] Server closed.');
         process.exit(0);
       });
