@@ -129,3 +129,30 @@ Main parameters in `config.js`:
 - If the simulation does not start: check that both teams have at least one valid unit.
 - If icons are missing: verify static route `/data/images/units/*` and `node_modules/aoe4data/images/units` exists.
 - After data updates: use `POST /api/data/refresh`.
+
+## Render Free Keep-Alive (GitHub Actions)
+
+Render free instances may sleep after inactivity. This repository includes
+`.github/workflows/render-keepalive.yml` to ping the app every 10 minutes.
+
+Setup steps:
+
+1. In GitHub repository settings, open `Secrets and variables` -> `Actions`.
+2. Add secret `RENDER_APP_URL` with your public Render URL (example: `https://my-app.onrender.com`).
+3. Push to `main` (or run the workflow manually from Actions once).
+4. Verify in Actions logs that `GET /api/data/health` returns success.
+
+Notes:
+
+- The workflow pings `${RENDER_APP_URL}/api/data/health`.
+- If the secret is missing or endpoint fails, the workflow fails intentionally.
+
+## Telegram Report Interval
+
+Telegram reporting interval is UTC-based and configurable by env var:
+
+- `TG_REPORT_INTERVAL_HOURS` (default: `6`)
+
+For your requested setup, set on Render:
+
+- `TG_REPORT_INTERVAL_HOURS=6`

@@ -10,8 +10,8 @@
  *
  * Exports:
  *   - sendMessage(text)   — send any text message
- *   - sendDailyReport()   — build + send the daily stats report
- *   - startScheduler()    — schedule sendDailyReport every day at 00:00 UTC
+ *   - sendDailyReport()   — build + send the stats report
+ *   - startScheduler()    — schedule sendDailyReport at fixed UTC intervals
  */
 
 const https = require('https');
@@ -100,7 +100,7 @@ async function sendMessage(text) {
 }
 
 /**
- * Build the daily recap message and send it, then reset counters.
+ * Build the recap message and send it, then reset counters.
  */
 async function sendDailyReport() {
   const snap = getDailySnapshot();
@@ -110,7 +110,7 @@ async function sendDailyReport() {
     arr.length ? arr.map((x) => `  • ${x.name}: ${x.count}`).join('\n') : '  (none)';
 
   const recap =
-    `<b>📊 AoE4 Simulator — Daily Report ${snap.date}</b>\n\n` +
+    `<b>📊 AoE4 Simulator — Report ${snap.date}</b>\n\n` +
     `🎮 Simulations started: <b>${snap.simulations}</b>\n` +
     `🎲 Monte-Carlo runs: <b>${snap.monteCarlo}</b>\n` +
     `👥 Unique clients: <b>${snap.uniqueClients}</b>\n` +
@@ -127,40 +127,59 @@ async function sendDailyReport() {
   await sendMessage(recap);
   await sendMessage(jsonBlock);
 
-  // Reset for next day AFTER sending so the report always contains the full day
+  // Reset after sending so each report covers only the latest interval window.
   resetDaily();
 }
 
 // ── Scheduler ────────────────────────────────────────────────────────────────
 
 /**
- * Schedule sendDailyReport to run every day at 00:00 UTC.
+ * Schedule sendDailyReport to run at fixed UTC intervals.
  * Uses a self-adjusting setTimeout (no cron library needed).
  */
 function startScheduler() {
   try {
     if (schedulerStarted) {
-      logger.warn('tg: daily reporter scheduler already started, skipping duplicate start');
+      logger.warn('tg: reporter scheduler already started, skipping duplicate start');
       return;
     }
 
     if (!config.tgBotToken || !config.tgChatId) {
-      logger.warn('tg: tgBotToken or tgChatId missing — daily reporter NOT started');
+      logger.warn('tg: tgBotToken or tgChatId missing — reporter NOT started');
       return;
     }
 
     schedulerStarted = true;
+    const intervalHours = Math.max(1, Number(process.env.TG_REPORT_INTERVAL_HOURS) || 6);
+    const intervalMs = intervalHours * 60 * 60 * 1000;
 
     function scheduleNext() {
       const now = new Date();
-      const nextMidnight = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
+      const elapsedMsToday =
+        now.getUTCHours() * 60 * 60 * 1000 +
+        now.getUTCMinutes() * 60 * 1000 +
+        now.getUTCSeconds() * 1000 +
+        now.getUTCMilliseconds();
+
+      const nextSlotMsToday =
+        Math.ceil((elapsedMsToday + 1) / intervalMs) * intervalMs;
+
+      const startOfDayUtc = Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0,
+        0,
+        0,
+        0
       );
-      const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+
+      const nextRun = new Date(startOfDayUtc + nextSlotMsToday);
+      const msUntilNextRun = nextRun.getTime() - now.getTime();
 
       logger.info(
-        `tg: next daily report at ${nextMidnight.toISOString()} ` +
-        `(${Math.round(msUntilMidnight / 60000)} minutes)`
+        `tg: next report at ${nextRun.toISOString()} UTC ` +
+        `(every ${intervalHours}h, in ${Math.round(msUntilNextRun / 60000)} minutes)`
       );
 
       dailyTimer = setTimeout(async () => {
@@ -169,14 +188,14 @@ function startScheduler() {
         } catch (err) {
           logger.error(err, 'tg: sendDailyReport failed');
         } finally {
-          // Always schedule the next run, even if today's send failed.
+          // Always schedule the next run, even if sending failed.
           scheduleNext();
         }
-      }, msUntilMidnight);
+      }, msUntilNextRun);
     }
 
     scheduleNext();
-    logger.info('tg: daily reporter scheduler started');
+    logger.info(`tg: reporter scheduler started (interval ${intervalHours}h, UTC aligned)`);
   } catch (e) {
     logger.error(e, 'tg: failed to start scheduler');
   }

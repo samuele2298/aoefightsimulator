@@ -31,6 +31,7 @@ const config = {
   // Telegram daily reporter
   // tgBotToken: token from @BotFather  (set via env var TG_BOT_TOKEN)
   // tgChatId:   your personal chat_id  (set via env var TG_CHAT_ID)
+  // TG_REPORT_INTERVAL_HOURS: report cadence in UTC hours (default: 6)
   tgBotToken: process.env.TG_BOT_TOKEN || '8943453175:AAEVXwxYr3J1wvWXYDNQ_7BWB_fDB3QAREw',
   tgChatId:   process.env.TG_CHAT_ID   || '893285969',
 };
