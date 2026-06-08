@@ -15,6 +15,11 @@
   </head>
   <body>
     <div class="app-shell">
+      <section class="telegram-alert" role="status" aria-live="polite">
+        <div class="telegram-alert-text">We opened the official Telegram channel.</div>
+        <a class="btn telegram-alert-btn" href="https://t.me/aoe4fightsimulator" target="_blank" rel="noreferrer">Open</a>
+      </section>
+
       <header class="panel control-bar">
         <div class="brand-wrap">
           <h1>AoE4 Fight Simulator</h1>
@@ -174,11 +179,28 @@
       </section>
 
       <section class="credits-showcase" aria-label="Credits">
-        <div class="credits-content">
-          <h3>Credits</h3>
-          <p class="credits-name">Samuele Carpani</p>
-          <a class="credits-email" href="mailto:samu.carpa@gmail.com">samu.carpa@gmail.com</a>
-          <p class="credits-game-line">Name in game: <a class="credits-game" href="https://aoe4world.com/players/8739298-Sam" target="_blank" rel="noreferrer">Sam98</a></p>
+        <div class="credits-split">
+          <div class="credits-content telegram-credits-card">
+            <h3>Official Telegram</h3>
+            <div class="telegram-brand-row">
+              <span class="telegram-logo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="12" cy="12" r="12"></circle>
+                  <path d="M18.95 6.92L16.64 18.3c-.17.8-.64 1-1.29.63l-3.57-2.63-1.72 1.65c-.19.19-.35.35-.71.35l.25-3.64 6.64-6.01c.29-.25-.06-.39-.45-.13l-8.21 5.16-3.53-1.1c-.77-.24-.78-.77.16-1.14l13.81-5.32c.64-.24 1.2.15.99 1.13z"></path>
+                </svg>
+              </span>
+              <a class="credits-telegram-link" href="https://t.me/aoe4fightsimulator" target="_blank" rel="noreferrer">t.me/aoe4fightsimulator</a>
+            </div>
+            <p class="telegram-credits-copy">Join the official Telegram channel to share your thoughts about the tool, compare builds, discuss fights, and report bugs or issues.</p>
+            <a class="btn primary telegram-credits-btn" href="https://t.me/aoe4fightsimulator" target="_blank" rel="noreferrer">Join the Telegram Channel</a>
+          </div>
+
+          <div class="credits-content">
+            <h3>Credits</h3>
+            <p class="credits-name">Samuele Carpani</p>
+            <a class="credits-email" href="mailto:samu.carpa@gmail.com">samu.carpa@gmail.com</a>
+            <p class="credits-game-line">Name in game: <a class="credits-game" href="https://aoe4world.com/players/8739298-Sam" target="_blank" rel="noreferrer">Sam98</a></p>
+          </div>
         </div>
       </section>
     </div>
