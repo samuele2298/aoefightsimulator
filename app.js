@@ -51,8 +51,16 @@ const main = async () => {
     next();
   });
 
-  // Serve frontend static files
-  app.use(express.static(path.join(__dirname, 'public')));
+  // Serve frontend static files; disable cache only for HTML documents.
+  app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, filePath) => {
+      if (path.extname(filePath) === '.html') {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    },
+  }));
 
   // Serve aoe4data unit/building images locally
   app.use(
@@ -90,6 +98,9 @@ const main = async () => {
 
   // Fallback: serve index.html for all non-API routes
   app.get('*', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 
